@@ -44,6 +44,9 @@
     opacity:0.01;
     font-size:24px;
     outline:none;
+    autocorrect: off;
+    autocomplete: off;
+    spellcheck: false;
   }
 </style>
 </head>
@@ -51,8 +54,7 @@
 <div class="container">
   <h1>WORDLE SARDO</h1>
   <div id="game"></div>
-  <input id="keyboardInput" type="text" maxlength="5"
-         autocorrect="off" autocomplete="off" spellcheck="false">
+  <input id="keyboardInput" type="text" maxlength="5">
 </div>
 
 <div id="overlay" class="overlay">
@@ -117,12 +119,13 @@ if(saved){
   data.guesses.forEach(g => renderGuess(g));
 }
 
+// render parola con gestione corretto/giallo/assente
 function renderGuess(guess){
   const solArr = solution.split("");
-  const used = {}; // contatore lettere per giallo
+  const used = {};
   solArr.forEach(ch => used[ch] = (used[ch]||0)+1);
-  
-  // prima colora verdi
+
+  // verdi
   guess.split("").forEach((ch,i)=>{
     const cell = rows[currentRow][i];
     cell.textContent = ch;
@@ -131,7 +134,7 @@ function renderGuess(guess){
       used[ch]--;
     }
   });
-  // poi gialli e neri
+  // gialli e neri
   guess.split("").forEach((ch,i)=>{
     const cell = rows[currentRow][i];
     if(cell.classList.contains("correct")) return;
@@ -145,7 +148,7 @@ function renderGuess(guess){
 
   guesses.push(guess);
   currentRow++;
-  positionInput(); // centra input sulla nuova riga
+  positionInput();
 }
 
 function endGame(win){
@@ -157,19 +160,15 @@ function endGame(win){
 // invio parola
 function submitGuess(){
   if(currentGuess.length !== 5 || currentRow >= maxRows) return;
-
   renderGuess(currentGuess);
-
   if(currentGuess === solution) endGame(true);
   else if(currentRow >= maxRows) endGame(false);
 
   localStorage.setItem(storageKey, JSON.stringify({ guesses }));
 
-  // reset variabili per la riga successiva
+  // reset variabili riga
   currentGuess = "";
   input.value = "";
-
-  // centra input sulla nuova riga
   positionInput();
 }
 
@@ -185,16 +184,22 @@ function positionInput(){
   }
 }
 
+// focus container
 document.querySelector(".container").addEventListener("click", () => {
   input.focus();
+  if(currentGuess.length>0){
+    for(let i=0;i<5;i++) rows[currentRow][i].textContent="";
+    currentGuess="";
+    input.value="";
+  }
+});
 
-  // se la riga corrente non è completa
-  if(currentGuess.length > 0){
-    for(let i = 0; i < 5; i++){
-      rows[currentRow][i].textContent = "";
-    }
-    currentGuess = "";
-    input.value = "";
+// input mobile
+input.addEventListener("input", e=>{
+  const val = e.target.value.toLowerCase().slice(0,5);
+  currentGuess = val;
+  for(let i=0;i<5;i++){
+    rows[currentRow][i].textContent = val[i] || "";
   }
 });
 
@@ -210,12 +215,16 @@ input.addEventListener("keydown", e=>{
 window.addEventListener("keydown", e=>{
   if(currentRow>=maxRows) return;
   if(e.key==="Enter") submitGuess();
- else if(e.key==="Backspace"){
-  currentGuess = currentGuess.slice(0,-1);
-  rows[currentRow][currentGuess.length].textContent = "";
-}
-else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length < 5){
-  const ch = e.key.toLowerCase();
-  rows[currentRow][currentGuess.length].textContent = ch;
-  currentGuess += ch;
-}
+  else if(e.key==="Backspace"){
+    currentGuess = currentGuess.slice(0,-1);
+    rows[currentRow][currentGuess.length].textContent = "";
+  }
+  else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
+    const ch = e.key.toLowerCase();
+    rows[currentRow][currentGuess.length].textContent = ch;
+    currentGuess += ch;
+  }
+});
+</script>
+</body>
+</html>
