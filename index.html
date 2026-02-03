@@ -156,13 +156,21 @@ function endGame(win){
 
 // invio parola
 function submitGuess(){
-  if(currentGuess.length!==5 || currentRow>=maxRows) return;
+  if(currentGuess.length !== 5 || currentRow >= maxRows) return;
+
   renderGuess(currentGuess);
-  if(currentGuess===solution) endGame(true);
-  else if(currentRow>=maxRows) endGame(false);
+
+  if(currentGuess === solution) endGame(true);
+  else if(currentRow >= maxRows) endGame(false);
+
   localStorage.setItem(storageKey, JSON.stringify({ guesses }));
-  currentGuess="";
-  input.value="";
+
+  // reset variabili per la riga successiva
+  currentGuess = "";
+  input.value = "";
+
+  // centra input sulla nuova riga
+  positionInput();
 }
 
 // input mobile invisibile
@@ -177,17 +185,16 @@ function positionInput(){
   }
 }
 
-// focus e input
 document.querySelector(".container").addEventListener("click", () => {
   input.focus();
-});
 
-// input event
-input.addEventListener("input", e=>{
-  const val = e.target.value.toLowerCase().slice(0,5);
-  currentGuess = val;
-  for(let i=0;i<5;i++){
-    rows[currentRow][i].textContent = val[i] || "";
+  // se la riga corrente non è completa
+  if(currentGuess.length > 0){
+    for(let i = 0; i < 5; i++){
+      rows[currentRow][i].textContent = "";
+    }
+    currentGuess = "";
+    input.value = "";
   }
 });
 
@@ -203,5 +210,12 @@ input.addEventListener("keydown", e=>{
 window.addEventListener("keydown", e=>{
   if(currentRow>=maxRows) return;
   if(e.key==="Enter") submitGuess();
-  else if(e.key==="Backspace"){
-    currentGuess = curr
+ else if(e.key==="Backspace"){
+  currentGuess = currentGuess.slice(0,-1);
+  rows[currentRow][currentGuess.length].textContent = "";
+}
+else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length < 5){
+  const ch = e.key.toLowerCase();
+  rows[currentRow][currentGuess.length].textContent = ch;
+  currentGuess += ch;
+}
