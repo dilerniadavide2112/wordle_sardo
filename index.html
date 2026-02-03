@@ -124,21 +124,26 @@ function renderGuess(guess){
   currentRow++;
 }
 
-function parolaSospetta(w){
-  if(/^(.)\1{4}$/.test(w)) return true;
-  if(/^[aeiou]{5}$/.test(w)) return true;
-  if(!/[aeiou].*[aeiou]/.test(w)) return true;
-  return false;
-}
 
+// 2. SOSTITUISCI la funzione submitGuess con questa versione:
 function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
 
-  if(parolaSospetta(currentGuess)){
-    alert("Parola non valida 😅");
-    return; // stessa riga, non consuma turno
+  // NUOVO CONTROLLO: Se la parola NON è inclusa nella lista WORDS
+  if(!WORDS.includes(currentGuess)){
+    alert("Parola non in elenco 😅"); // Messaggio se la parola non esiste nel dizionario
+    return; // Blocca il turno senza consumarlo
   }
 
+  renderGuess(currentGuess);
+  localStorage.setItem(storageKey, JSON.stringify({guesses}));
+  
+  if(currentGuess===solution) showOverlay(guesses.length, true);
+  else if(currentRow>=maxRows) showOverlay(currentRow, false);
+
+  currentGuess="";
+  input.value="";
+}
   renderGuess(currentGuess);
   localStorage.setItem(storageKey, JSON.stringify({guesses}));
 if(currentGuess===solution) showOverlay(guesses.length, true);
