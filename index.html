@@ -90,7 +90,7 @@ function endGame(win){
   document.getElementById("overlay").classList.add("show");
 }
 
-function submitGuess()(){
+function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
   renderGuess(currentGuess);
   if(currentGuess===solution) endGame(true);
