@@ -34,9 +34,10 @@
   .modal h2{letter-spacing:.2em;margin-bottom:10px;}
   .show{display:flex;}
 
-  /* input mobile invisibile centrato sulla riga attiva */
+  /* input mobile invisibile */
   #keyboardInput {
     position:absolute;
+    bottom:0; 
     left:50%;
     transform:translateX(-50%);
     width:90%;
@@ -44,9 +45,6 @@
     opacity:0.01;
     font-size:24px;
     outline:none;
-    autocorrect: off;
-    autocomplete: off;
-    spellcheck: false;
   }
 </style>
 </head>
@@ -54,7 +52,7 @@
 <div class="container">
   <h1>WORDLE SARDO</h1>
   <div id="game"></div>
-  <input id="keyboardInput" type="text" maxlength="5">
+  <input id="keyboardInput" type="text" maxlength="5" autocorrect="off" autocomplete="off" spellcheck="false">
 </div>
 
 <div id="overlay" class="overlay">
@@ -67,22 +65,22 @@
 <script>
 // Dizionario
 const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu",
-  "amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu",
-  "berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu","caded",
-  "camin","campu","canes","capru","carri","ceddu","chelu","chena","chida",
-  "chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre",
-  "dente","dinai","dridu","fangu","fattu","femmu","ferro","figus","filu",
-  "foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu",
-  "granu","herra","ibidu","istru","latte","legnu","libru","littu","logu",
-  "macas","manus","mattu","melis","menta","merca","metru","missa","molle",
-  "monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini",
-  "orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu",
-  "ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu",
-  "riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu",
-  "sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu",
-  "suddu","tabba","tanca","tattu","terru","tissu","torru","trigu","umbra",
-  "undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga",
-  "zente","zinnu","bentu"];
+"amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu",
+"berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu","caded",
+"camin","campu","canes","capru","carri","ceddu","chelu","chena","chida",
+"chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre",
+"dente","dinai","dridu","fangu","fattu","femmu","ferro","figus","filu",
+"foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu",
+"granu","herra","ibidu","istru","latte","legnu","libru","littu","logu",
+"macas","manus","mattu","melis","menta","merca","metru","missa","molle",
+"monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini",
+"orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu",
+"ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu",
+"riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu",
+"sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu",
+"suddu","tabba","tanca","tattu","terru","tissu","torru","trigu","umbra",
+"undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga",
+"zente","zinnu","bentu"];
 
 // parola del giorno
 const epoch = new Date(2024,0,1);
@@ -119,10 +117,51 @@ if(saved){
   data.guesses.forEach(g => renderGuess(g));
 }
 
-// render parola con gestione corretto/giallo/assente
+// input mobile
+const input = document.getElementById("keyboardInput");
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+// centra input sulla riga corrente (solo desktop)
+function positionInput(){
+  if(isMobile) return;
+  const rowRect = rows[currentRow]?.[0]?.getBoundingClientRect();
+  if(rowRect){
+    const scrollY = window.scrollY || window.pageYOffset;
+    input.style.top = (rowRect.top + scrollY) + "px";
+  }
+}
+
+// focus click container e reset riga incompleta
+document.querySelector(".container").addEventListener("click", () => {
+  input.focus();
+  if(currentGuess.length>0){
+    for(let i=0;i<5;i++) rows[currentRow][i].textContent="";
+    currentGuess="";
+    input.value="";
+  }
+});
+
+// invio parola
+function submitGuess(){
+  if(currentGuess.length!==5 || currentRow>=maxRows) return;
+
+  renderGuess(currentGuess);
+
+  if(currentGuess===solution) endGame(true);
+  else if(currentRow>=maxRows) endGame(false);
+
+  localStorage.setItem(storageKey, JSON.stringify({ guesses }));
+
+  currentGuess="";
+  input.value="";
+
+  positionInput();
+}
+
+// colorazione celle con gestione doppie lettere
 function renderGuess(guess){
   const solArr = solution.split("");
-  const used = {};
+  const used = {}; 
   solArr.forEach(ch => used[ch] = (used[ch]||0)+1);
 
   // verdi
@@ -134,7 +173,8 @@ function renderGuess(guess){
       used[ch]--;
     }
   });
-  // gialli e neri
+
+  // gialli/assenti
   guess.split("").forEach((ch,i)=>{
     const cell = rows[currentRow][i];
     if(cell.classList.contains("correct")) return;
@@ -151,63 +191,25 @@ function renderGuess(guess){
   positionInput();
 }
 
+// fine gioco
 function endGame(win){
   document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
   document.getElementById("solution").textContent = "Parola: " + solution.toUpperCase();
   document.getElementById("overlay").classList.add("show");
 }
 
-// invio parola
-function submitGuess(){
-  if(currentGuess.length !== 5 || currentRow >= maxRows) return;
-  renderGuess(currentGuess);
-  if(currentGuess === solution) endGame(true);
-  else if(currentRow >= maxRows) endGame(false);
-
-  localStorage.setItem(storageKey, JSON.stringify({ guesses }));
-
-  // reset variabili riga
-  currentGuess = "";
-  input.value = "";
-  positionInput();
-}
-
-// input mobile invisibile
-const input = document.getElementById("keyboardInput");
-
-// centra input sulla riga corrente
-function positionInput(){
-  const rowRect = rows[currentRow]?.[0]?.getBoundingClientRect();
-  if(rowRect){
-    const scrollY = window.scrollY || window.pageYOffset;
-    input.style.top = (rowRect.top + scrollY) + "px";
-  }
-}
-
-// focus container
-document.querySelector(".container").addEventListener("click", () => {
-  input.focus();
-  if(currentGuess.length>0){
-    for(let i=0;i<5;i++) rows[currentRow][i].textContent="";
-    currentGuess="";
-    input.value="";
-  }
-});
-
-// input mobile
+// gestione input mobile
 input.addEventListener("input", e=>{
   const val = e.target.value.toLowerCase().slice(0,5);
   currentGuess = val;
-  for(let i=0;i<5;i++){
-    rows[currentRow][i].textContent = val[i] || "";
-  }
+  for(let i=0;i<5;i++) rows[currentRow][i].textContent = val[i]||"";
 });
 
 input.addEventListener("keydown", e=>{
   if(e.key==="Enter") submitGuess();
   else if(e.key==="Backspace"){
     currentGuess = currentGuess.slice(0,-1);
-    rows[currentRow][currentGuess.length].textContent = "";
+    rows[currentRow][currentGuess.length].textContent="";
   }
 });
 
@@ -217,12 +219,11 @@ window.addEventListener("keydown", e=>{
   if(e.key==="Enter") submitGuess();
   else if(e.key==="Backspace"){
     currentGuess = currentGuess.slice(0,-1);
-    rows[currentRow][currentGuess.length].textContent = "";
-  }
-  else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
+    rows[currentRow][currentGuess.length].textContent="";
+  } else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
     const ch = e.key.toLowerCase();
-    rows[currentRow][currentGuess.length].textContent = ch;
-    currentGuess += ch;
+    rows[currentRow][currentGuess.length].textContent=ch;
+    currentGuess+=ch;
   }
 });
 </script>
