@@ -34,6 +34,7 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
 <div class="modal">
 <h2 id="result"></h2>
 <p id="solution"></p>
+<p id="judgment"></p>
 <button class="shareBtn" id="shareBtn">Condividi</button>
 <button class="closeBtn" id="closeBtn">Chiudi</button>
 </div>
@@ -99,18 +100,12 @@ function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
   renderGuess(currentGuess);
   localStorage.setItem(storageKey, JSON.stringify({guesses}));
+
   if(currentGuess===solution) showOverlay(currentRow, true);
   else if(currentRow>=maxRows) showOverlay(currentRow, false);
+
   currentGuess="";
   input.value="";
-}
-
-function showOverlay(tentativi, win){
-  document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
-  const display = win ? tentativi+"/6" : "X/6";
-  document.getElementById("solution").textContent="Tentativi: "+display;
-  generateShareText(win, tentativi);
-  document.getElementById("overlay").classList.add("show");
 }
 
 function giudizio(win, tentativi){
@@ -120,10 +115,25 @@ function giudizio(win, tentativi){
   return "ti ses salvadu 😅";
 }
 
+function showOverlay(tentativi, win){
+  document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
+
+  const score = win ? tentativi+"/6" : "X/6";
+  document.getElementById("solution").textContent = "Parola: " + solution + "\nTentativi: " + score;
+
+  const frase = giudizio(win, tentativi);
+  document.getElementById("judgment").textContent = frase;
+
+  generateShareText(win, tentativi);
+  document.getElementById("overlay").classList.add("show");
+}
+
 function generateShareText(win, tentativi){
   const score = win ? tentativi+"/6" : "X/6";
   const frase = giudizio(win, tentativi);
+
   let text="Wordle Sardo "+dayIndex+" "+score+"\n"+frase+"\n\n";
+
   guesses.forEach((g,ri)=>{
     for(let i=0;i<5;i++){
       const cell=rows[ri][i];
@@ -133,6 +143,7 @@ function generateShareText(win, tentativi){
     }
     text+="\n";
   });
+
   window.shareText=text;
 }
 
