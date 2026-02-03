@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wordle Sardo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#111; color:#eee; display:flex; justify-content:center; }
+    .container { margin-top:30px; text-align:center; }
+    h1 { letter-spacing:0.3em; margin-bottom:20px; }
+    .row { display:flex; justify-content:center; }
+    .cell { width:50px; height:50px; border:2px solid #333; margin:3px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:600; text-transform:uppercase; }
+    .correct { background:#538d4e; border-color:#538d4e; }
+    .present { background:#b59f3b; border-color:#b59f3b; }
+    .absent { background:#3a3a3c; border-color:#3a3c; }
+  @keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
+    .modal{background:#222;padding:30px;border-radius:12px;animation:pop .3s ease-out;text-align:center;}
+    .modal h2{letter-spacing:.2em;margin-bottom:10px;}
+    .show{display:flex;}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>WORDLE SARDO</h1>
+  <div id="game"></div>
+</div>
+
+<div id="overlay" class="overlay">
+  <div class="modal">
+    <h2 id="result"></h2>
+    <p id="solution"></p>
+  </div>
+</div>
+
+<script>
+// Dizionario minimo (LSC, 5 lettere)
+const WORDS = ["limba","domus","bentu","terra","cantu","pitzs"];
+
+// parola del giorno
+const epoch = new Date(2024,0,1);
+const dayIndex = Math.floor((Date.now() - epoch) / 86400000);
+const solution = WORDS[dayIndex % WORDS.length];
+const storageKey = "wordle-sardo-" + dayIndex;
+
+const maxRows = 6;
+const game = document.getElementById("game");
+let currentRow = 0;
+let currentGuess = "";
+let guesses = [];
+
+// griglia
+const rows = [];
+for (let r=0;r<maxRows;r++){
+  const row = document.createElement("div");
+  row.className = "row";
+  const cells = [];
+  for (let c=0;c<5;c++){
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    row.appendChild(cell);
+    cells.push(cell);
+  }
+  game.appendChild(row);
+  rows.push(cells);
+}
+
+// ripristino stato
+const saved = localStorage.getItem(storageKey);
+if(saved){
+  const data = JSON.parse(saved);
+  data.guesses.forEach(g => renderGuess(g));
+}
+
+function renderGuess(guess){
+  const solArr = solution.split("");
+  guess.split("").forEach((ch,i)=>{
+    const cell = rows[currentRow][i];
+    cell.textContent = ch;
+    if(ch===solArr[i]) cell.classList.add("correct");
+    else if(solArr.includes(ch)) cell.classList.add("present");
+    else cell.classList.add("absent");
+  });
+  guesses.push(guess);
+  currentRow++;
+}
+
+function endGame(win){
+  document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
+  document.getElementById("solution").textContent = "Parola: " + solution.toUpperCase();
+  document.getElementById("overlay").classList.add("show");
+}
+
+function submitGuess()(){
+  if(currentGuess.length!==5 || currentRow>=maxRows) return;
+  renderGuess(currentGuess);
+  if(currentGuess===solution) endGame(true);
+  else if(currentRow>=maxRows) endGame(false);
+  localStorage.setItem(storageKey, JSON.stringify({ guesses }));
+  currentGuess="";
+}
+
+window.addEventListener("keydown", e=>{
+  if(currentRow>=maxRows) return;
+  if(e.key==="Enter") submitGuess();
+  else if(e.key==="Backspace"){
+    currentGuess = currentGuess.slice(0,-1);
+    rows[currentRow][currentGuess.length].textContent = "";
+  }
+  else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
+    const ch = e.key.toLowerCase();
+    rows[currentRow][currentGuess.length].textContent = ch;
+    currentGuess += ch;
+  }
+});
+</script>
+</body>
+</html>
+
