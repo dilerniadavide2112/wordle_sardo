@@ -5,37 +5,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Wordle Sardo</title>
 <style>
-  body { font-family: system-ui, sans-serif; background:#111; color:#eee; display:flex; justify-content:center; }
-  .container { margin-top:30px; text-align:center; width:95vw; max-width:500px; position:relative; }
-  h1 { letter-spacing:0.3em; margin-bottom:20px; }
-  .row { display:flex; justify-content:center; }
-  .cell { flex: 1 1 18%; min-width:40px; max-width:60px; height:auto; aspect-ratio:1/1; border:2px solid #333; margin:3px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:600; text-transform:uppercase; }
-  .correct { background:#538d4e; border-color:#538d4e; }
-  .present { background:#b59f3b; border-color:#b59f3b; }
-  .absent { background:#3a3a3c; border-color:#3c3c3c; }
-  @keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
-  .modal{background:#222;padding:30px;border-radius:12px;animation:pop .3s ease-out;text-align:center;}
-  .modal h2{letter-spacing:.2em;margin-bottom:10px;}
-  .show{display:flex;}
-  #keyboardInput {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    height: 50px;
-    opacity: 0.01;
-    font-size: 24px;
-    outline: none;
-    bottom: 0;
-  }
+body {
+  font-family: system-ui, sans-serif;
+  background:#111;
+  color:#eee;
+  display:flex;
+  justify-content:center;
+}
+.container {
+  margin-top:30px;
+  text-align:center;
+  width:95vw;
+  max-width:500px;
+  position:relative;
+}
+h1 { letter-spacing:0.3em; margin-bottom:20px; }
+.row { display:flex; justify-content:center; }
+.cell {
+  flex:1 1 18%;
+  min-width:40px;
+  max-width:60px;
+  height:auto;
+  aspect-ratio:1/1;
+  border:2px solid #333;
+  margin:3px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+  font-weight:600;
+  text-transform:uppercase;
+}
+.correct { background:#538d4e; border-color:#538d4e; }
+.present { background:#b59f3b; border-color:#b59f3b; }
+.absent { background:#3a3a3c; border-color:#3c3c3c; }
+
+@keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal{
+  background:#222;
+  padding:30px;
+  border-radius:12px;
+  animation:pop .3s ease-out;
+  text-align:center;
+}
+.modal h2{letter-spacing:.2em;margin-bottom:10px;}
+.show{display:flex;}
+
+/* input mobile invisibile ma touchable */
+#keyboardInput {
+  position:absolute;
+  bottom:0; /* bordo inferiore */
+  left:50%;
+  transform:translateX(-50%);
+  width:90%;
+  height:40px;
+  opacity:0.01;
+  font-size:24px;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>WORDLE SARDO</h1>
   <div id="game"></div>
-  <input id="keyboardInput" type="text" maxlength="5" autocorrect="off" autocomplete="off" spellcheck="false">
+  <input id="keyboardInput" type="text" maxlength="5" 
+       autocorrect="off" autocomplete="off" spellcheck="false">
 </div>
 
 <div id="overlay" class="overlay">
@@ -79,13 +121,13 @@ let guesses = [];
 
 // griglia
 const rows = [];
-for (let r=0;r<maxRows;r++){
+for(let r=0;r<maxRows;r++){
   const row = document.createElement("div");
-  row.className = "row";
-  const cells = [];
-  for (let c=0;c<5;c++){
-    const cell = document.createElement("div");
-    cell.className = "cell";
+  row.className="row";
+  const cells=[];
+  for(let c=0;c<5;c++){
+    const cell=document.createElement("div");
+    cell.className="cell";
     row.appendChild(cell);
     cells.push(cell);
   }
@@ -97,68 +139,32 @@ for (let r=0;r<maxRows;r++){
 const saved = localStorage.getItem(storageKey);
 if(saved){
   const data = JSON.parse(saved);
-  data.guesses.forEach(g => renderGuess(g));
+  data.guesses.forEach(g=>renderGuess(g));
 }
 
-const input = document.getElementById("keyboardInput");
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-function positionInput(){
-  if(isMobile) return;
-  const rowRect = rows[currentRow]?.[0]?.getBoundingClientRect();
-  if(rowRect){
-    const scrollY = window.scrollY || window.pageYOffset;
-    input.style.top = (rowRect.top + scrollY) + "px";
-  }
-}
-
-// focus click container e reset riga incompleta
-document.querySelector(".container").addEventListener("click", () => {
-  input.focus();
-  if(currentGuess.length>0){
-    for(let i=0;i<5;i++) rows[currentRow][i].textContent="";
-    currentGuess="";
-    input.value="";
-  }
-});
-
-function submitGuess(){
-  if(currentGuess.length!==5 || currentRow>=maxRows) return;
-
-  renderGuess(currentGuess);
-
-  if(currentGuess===solution) endGame(true);
-  else if(currentRow>=maxRows) endGame(false);
-
-  localStorage.setItem(storageKey, JSON.stringify({ guesses }));
-
-  currentGuess="";
-  input.value="";
-  positionInput();
-}
-
+// render corretto
 function renderGuess(guess){
   const solArr = solution.split("");
-  const used = {};
-  solArr.forEach(ch => used[ch]=(used[ch]||0)+1);
+  const solCount = {};
+  solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
 
-  // verdi
+  // prima passata: correct
   guess.split("").forEach((ch,i)=>{
-    const cell = rows[currentRow][i];
-    cell.textContent = ch;
+    const cell=rows[currentRow][i];
+    cell.textContent=ch;
     if(ch===solArr[i]){
       cell.classList.add("correct");
-      used[ch]--;
+      solCount[ch]--;
     }
   });
 
-  // gialli/assenti
+  // seconda passata: present
   guess.split("").forEach((ch,i)=>{
-    const cell = rows[currentRow][i];
+    const cell=rows[currentRow][i];
     if(cell.classList.contains("correct")) return;
-    if(solArr.includes(ch) && used[ch]>0){
+    if(solArr.includes(ch) && solCount[ch]>0){
       cell.classList.add("present");
-      used[ch]--;
+      solCount[ch]--;
     } else {
       cell.classList.add("absent");
     }
@@ -166,38 +172,50 @@ function renderGuess(guess){
 
   guesses.push(guess);
   currentRow++;
-  positionInput();
 }
 
 function endGame(win){
-  document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
-  document.getElementById("solution").textContent = "Parola: " + solution.toUpperCase();
+  document.getElementById("result").textContent=win?"BRAVU":"FINIDU";
+  document.getElementById("solution").textContent="Parola: "+solution.toUpperCase();
   document.getElementById("overlay").classList.add("show");
 }
 
+function submitGuess(){
+  if(currentGuess.length!==5 || currentRow>=maxRows) return;
+  renderGuess(currentGuess);
+  if(currentGuess===solution) endGame(true);
+  else if(currentRow>=maxRows) endGame(false);
+  localStorage.setItem(storageKey, JSON.stringify({guesses}));
+  currentGuess="";
+}
+
 // input mobile
-input.addEventListener("input", e=>{
+const input = document.getElementById("keyboardInput");
+document.querySelector(".container").addEventListener("click",()=>input.focus());
+
+input.addEventListener("input",e=>{
   const val = e.target.value.toLowerCase().slice(0,5);
   currentGuess = val;
-  for(let i=0;i<5;i++) rows[currentRow][i].textContent = val[i]||"";
+  for(let i=0;i<5;i++) rows[currentRow][i].textContent = val[i] || "";
 });
 
-input.addEventListener("keydown", e=>{
+input.addEventListener("keydown",e=>{
   if(e.key==="Enter") submitGuess();
   else if(e.key==="Backspace"){
-    currentGuess = currentGuess.slice(0,-1);
+    currentGuess=currentGuess.slice(0,-1);
     rows[currentRow][currentGuess.length].textContent="";
   }
 });
 
 // tastiera PC
-window.addEventListener("keydown", e=>{
+window.addEventListener("keydown",e=>{
   if(currentRow>=maxRows) return;
   if(e.key==="Enter") submitGuess();
   else if(e.key==="Backspace"){
-    currentGuess = currentGuess.slice(0,-1);
+    currentGuess=currentGuess.slice(0,-1);
     rows[currentRow][currentGuess.length].textContent="";
-  } else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
+  }
+  else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
     const ch = e.key.toLowerCase();
     rows[currentRow][currentGuess.length].textContent = ch;
     currentGuess += ch;
