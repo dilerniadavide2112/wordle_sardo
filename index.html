@@ -2,17 +2,32 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wordle Sardo</title>
   <style>
     body { font-family: system-ui, sans-serif; background:#111; color:#eee; display:flex; justify-content:center; }
-    .container { margin-top:30px; text-align:center; }
+    .container { 
+      margin-top:30px; 
+      text-align:center; 
+      width:95vw;       /* responsive */
+      max-width:500px;  /* non troppo grande su tablet */
+    }
     h1 { letter-spacing:0.3em; margin-bottom:20px; }
     .row { display:flex; justify-content:center; }
-    .cell { width:50px; height:50px; border:2px solid #333; margin:3px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:600; text-transform:uppercase; }
+    .cell { 
+      flex: 1 1 18%; 
+      min-width:40px; max-width:60px; 
+      height:auto; aspect-ratio:1/1; 
+      border:2px solid #333; 
+      margin:3px; 
+      display:flex; align-items:center; justify-content:center; 
+      font-size:24px; font-weight:600; text-transform:uppercase;
+    }
     .correct { background:#538d4e; border-color:#538d4e; }
     .present { background:#b59f3b; border-color:#b59f3b; }
-    .absent { background:#3a3a3c; border-color:#3a3c; }
-  @keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+    .absent { background:#3a3a3c; border-color:#3c3c3c; }
+
+    @keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
     .modal{background:#222;padding:30px;border-radius:12px;animation:pop .3s ease-out;text-align:center;}
     .modal h2{letter-spacing:.2em;margin-bottom:10px;}
