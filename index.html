@@ -25,11 +25,7 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
 </head>
 <body>
 <div class="container">
-<h1>
-  WORDLE SARDO
-  <img src="sardegna.png" alt="Bandiera sarda"
-       style="height:28px; vertical-align:middle; margin-left:8px;">
-</h1>
+<h1>WORDLE SARDO</h1>
 <div id="game"></div>
 <input id="keyboardInput" type="text" maxlength="5" autocorrect="off" autocomplete="off" spellcheck="false">
 </div>
@@ -77,8 +73,15 @@ let guesses=[];
 const rows=[];
 for(let r=0;r<maxRows;r++){
   const row=document.createElement("div");row.className="row";
-  const cells=[];for(let c=0;c<5;c++){const cell=document.createElement("div");cell.className="cell";row.appendChild(cell);cells.push(cell);}
-  game.appendChild(row);rows.push(cells);
+  const cells=[];
+  for(let c=0;c<5;c++){
+    const cell=document.createElement("div");
+    cell.className="cell";
+    row.appendChild(cell);
+    cells.push(cell);
+  }
+  game.appendChild(row);
+  rows.push(cells);
 }
 
 const saved=localStorage.getItem(storageKey);
@@ -93,16 +96,38 @@ const input=document.getElementById("keyboardInput");
 document.querySelector(".container").addEventListener("click",()=>input.focus());
 
 function renderGuess(guess){
-  const solArr=solution.split("");const solCount={};solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
-  guess.split("").forEach((ch,i)=>{const cell=rows[currentRow][i];cell.textContent=ch;if(ch===solArr[i]){cell.classList.add("correct");solCount[ch]--;}});
+  const solArr=solution.split("");
+  const solCount={};
+  solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
 
-  guess.split("").forEach((ch,i)=>{const cell=rows[currentRow][i];if(cell.classList.contains("correct")) return;if(solArr.includes(ch)&&solCount[ch]>0){cell.classList.add("present");solCount[ch]--;}else{cell.classList.add("absent");}});
-  guesses.push(guess);currentRow++;
+  guess.split("").forEach((ch,i)=>{
+    const cell=rows[currentRow][i];
+    cell.textContent=ch;
+    if(ch===solArr[i]){
+      cell.classList.add("correct");
+      solCount[ch]--;
+    }
+  });
+
+  guess.split("").forEach((ch,i)=>{
+    const cell=rows[currentRow][i];
+    if(cell.classList.contains("correct")) return;
+    if(solArr.includes(ch)&&solCount[ch]>0){
+      cell.classList.add("present");
+      solCount[ch]--;
+    } else {
+      cell.classList.add("absent");
+    }
+  });
+
+  guesses.push(guess);
+  currentRow++;
 }
+
 function parolaSospetta(w){
-  if(/^(.)\1{4}$/.test(w)) return true; // aaaaa
-  if(/^[aeiou]{5}$/.test(w)) return true; // aeiou
-  if(!/[aeiou].*[aeiou]/.test(w)) return true; // zero vocali vere
+  if(/^(.)\1{4}$/.test(w)) return true;
+  if(/^[aeiou]{5}$/.test(w)) return true;
+  if(!/[aeiou].*[aeiou]/.test(w)) return true;
   return false;
 }
 
@@ -111,7 +136,7 @@ function submitGuess(){
 
   if(parolaSospetta(currentGuess)){
     alert("Parola non valida 😅");
-    return;
+    return; // stessa riga, non consuma turno
   }
 
   renderGuess(currentGuess);
@@ -119,10 +144,6 @@ function submitGuess(){
 
   if(currentGuess===solution) showOverlay(currentRow, true);
   else if(currentRow>=maxRows) showOverlay(currentRow, false);
-
-  currentGuess="";
-  input.value="";
-}
 
   currentGuess="";
   input.value="";
@@ -139,10 +160,10 @@ function showOverlay(tentativi, win){
   document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
 
   const score = win ? tentativi+"/6" : "X/6";
-  document.getElementById("solution").textContent = "Parola: " + solution + "\nTentativi: " + score;
+  document.getElementById("solution").textContent =
+    "Parola: " + solution + "\nTentativi: " + score;
 
-  const frase = giudizio(win, tentativi);
-  document.getElementById("judgment").textContent = frase;
+  document.getElementById("judgment").textContent = giudizio(win, tentativi);
 
   generateShareText(win, tentativi);
   document.getElementById("overlay").classList.add("show");
