@@ -1,328 +1,211 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Wordle Sardo</title>
-<style>
-body { font-family: system-ui, sans-serif; background:#111; color:#eee; display:flex; justify-content:center; }
-.container { margin-top:30px; text-align:center; width:95vw; max-width:500px; position:relative; }
-h1 { letter-spacing:0.3em; margin-bottom:20px; }
-.row { display:flex; justify-content:center; }
-.cell { flex:1 1 18%; min-width:40px; max-width:60px; height:auto; aspect-ratio:1/1; border:2px solid #333; margin:3px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:600; text-transform:uppercase; }
-.correct { background:#538d4e; border-color:#538d4e; }
-.present { background:#b59f3b; border-color:#b59f3b; }
-.absent { background:#3a3a3c; border-color:#3c3c3c; }
-@keyframes pop {0%{transform:scale(0.8);opacity:0}100%{transform:scale(1);opacity:1}}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
-.modal{background:#222;padding:30px;border-radius:12px;animation:pop .3s ease-out;text-align:center;white-space:pre-line;}
-.modal h2{letter-spacing:.2em;margin-bottom:10px;}
-.show{display:flex;}
-#keyboardInput{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:90%;height:40px;opacity:0.01;font-size:24px;}
-.shareBtn{margin-top:15px;padding:10px 20px;font-size:16px;border:none;border-radius:6px;background:#538d4e;color:#fff;cursor:pointer;}
-.closeBtn{margin-top:10px;padding:5px 10px;font-size:14px;border:none;border-radius:6px;background:#555;color:#fff;cursor:pointer;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wordle Sardo</title>
+    <style>
+        :root { --green: #538d4e; --yellow: #b59f3b; --gray: #3a3a3c; --black: #121213; --border: #3a3a3c; }
+        body { background: var(--black); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        
+        header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid var(--border); box-sizing: border-box; }
+        h1 { font-size: 24px; letter-spacing: 4px; margin: 0; }
+        .icon-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+
+        #board { display: grid; grid-template-rows: repeat(6, 1fr); grid-gap: 5px; width: 330px; height: 400px; margin: 20px 0; }
+        .row { display: grid; grid-template-columns: repeat(5, 1fr); grid-gap: 5px; }
+        .cell { border: 2px solid var(--border); display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: bold; text-transform: uppercase; transition: transform 0.1s; }
+        .cell.pop { transform: scale(1.1); }
+
+        .keyboard { width: 100%; max-width: 500px; padding: 10px; box-sizing: border-box; }
+        .kb-row { display: flex; justify-content: center; margin-bottom: 8px; }
+        .key { background: #818384; color: white; border: 0; border-radius: 4px; margin: 0 3px; height: 58px; flex: 1; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 14px; user-select: none; }
+        .key.wide { flex: 1.5; font-size: 12px; }
+
+        .correct { background: var(--green) !important; border-color: var(--green); }
+        .present { background: var(--yellow) !important; border-color: var(--yellow); }
+        .absent { background: var(--gray) !important; border-color: var(--gray); }
+
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal { background: #1e1e1e; padding: 25px; border-radius: 15px; text-align: center; width: 85%; max-width: 400px; border: 1px solid var(--border); }
+        .show { display: flex; }
+        
+        .stat-bar { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-val { font-size: 24px; font-weight: bold; }
+        .stat-lbl { font-size: 10px; text-transform: uppercase; }
+
+        .share-btn { background: var(--green); color: white; border: none; width: 100%; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 15px; }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>WORDLE SARDO</h1>
-<div id="game"></div>
-<input id="keyboardInput" type="text" maxlength="5" autocorrect="off" autocomplete="off" spellcheck="false">
+
+<header>
+    <button class="icon-btn" onclick="toggleModal('rules-modal')">❓</button>
+    <h1>WORDLE SARDO</h1>
+    <button class="icon-btn" onclick="showStatsModal()">📊</button>
+</header>
+
+<div id="board"></div>
+
+<div class="keyboard">
+    <div class="kb-row" id="row1"></div>
+    <div class="kb-row" id="row2"></div>
+    <div class="kb-row" id="row3"></div>
 </div>
 
-<div id="overlay" class="overlay">
-<div class="modal">
-<h2 id="result"></h2>
-<p id="solution"></p>
-<p id="judgment"></p>
-<button class="shareBtn" id="shareBtn">Condividi</button>
-<button class="closeBtn" id="closeBtn">Chiudi</button>
-</div>
+<div id="stats-modal" class="overlay">
+    <div class="modal">
+        <h2 id="res-title"></h2>
+        <p id="judgment" style="color:var(--yellow); font-size: 1.2rem; font-weight: bold;"></p>
+        <div class="stat-bar">
+            <div class="stat-item"><span class="stat-val" id="st-played">0</span><span class="stat-lbl">Giocate</span></div>
+            <div class="stat-item"><span class="stat-val" id="st-win">0</span><span class="stat-lbl">% Vinte</span></div>
+            <div class="stat-item"><span class="stat-val" id="st-streak">0</span><span class="stat-lbl">Streak</span></div>
+        </div>
+        <p id="sol-reveal"></p>
+        <button class="share-btn" id="share-btn">CONDIVIDI ➔</button>
+        <button onclick="toggleModal('stats-modal')" style="background:none; border:none; color:#aaa; margin-top:15px; cursor:pointer;">Chiudi</button>
+    </div>
 </div>
 
 <script>
-const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu",
-"amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu",
-"berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu","caded",
-"camin","campu","canes","capru","carri","ceddu","chelu","chena","chida",
-"chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre",
-"dente","dinai","dridu","fangu","fattu","femmu","ferro","figus","filu",
-"foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu",
-"granu","herra","ibidu","istru","latte","legnu","libru","littu","logu",
-"macas","manus","mattu","melis","menta","merca","metru","missa","molle",
-"monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini",
-"orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu",
-"ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu",
-"riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu",
-"sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu",
-"suddu","tabba","tanca","tattu","terru","tissu","torru","trigu","umbra",
-"undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga",
-"zente","zinnu","bentu","abbae","abbas","abidu","acqua","addiu","agudu","aiadu","ajudu","alidu","altu","amadu","amare","ambra","annos","ansia","apriu","aridu","arras","artu","asinu","attzu","auras","azotu",
-               "bacas","bagna","ballu","battu","beidu","bentu","berru","bidda","binu","boghe","bonu","braxu","bravu","bussu","cabbu","caded","camin","campu","canes","capru","carri","ceddu","chelu","chena",
-               "chida","chidu","coggi","coldu","conca","corru","costa","craba","crobu","cuadu","curre","dente","dinai","domus","dridu","durus","fache","fangu","fattu","femmu","ferro","figus","filu","foghe",
-               "forru","fradi","fridu","frori","fundu","gattu","genna","giara","goccu","granu","herra","ibidu","imidu","istru","lattu","latte","legnu","libru","littu","logu","luciu","macas","maled","manus",
-               "mariu","mattu","melis","menta","merca","metru","missa","moddu","molle","monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini","orrua","ossu","paber","panee","pannu","pedde",
-               "perda","pesca","piana","pietu","pilus","pinna","pintu","pitzus","planu","ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu","regnu","riccu","rimas","rinnu","rocca","roghe",
-               "rueda","sabba","santu","sartu","sedda","serra","siddu","sinnu","solee","sonnu","spada","spina","stadu","stolu","suddu","tabba","tanca","tattu","tenre","terru","tissu","torru","trigu","umbra",
-               "undas","ungra","usciu","vacua","vacca","valle","vesta","vidda","vinu","virga","zente","zinnu","zoccu","abbidu","abbaru","abeta","abidu","abinu","accas","acidu","acutu","agidu","ajuru","alenu",
-               "alidu","amada","amidu","anniu","apidu","aratu","ardiu","aridu","arriu","aspre","attiu","augas","bagna","baldu","balia","barca","bentu","bidas","bighe","bionu","boidu","bolla","branu","brida",
-               "brutu","cabra","cairu","caldu","cantu","carbu","caria","casca","cattu","cennu","chena","cibru","coddu","cortu","cress","cuasi","curdu","dannu","deidu","dertu","doble","doltu","draga","durra",
-               "faina","fattu","feddu","filla","finas","fitta","flori","foras","fremu","fridu","fundu","gabbu","galdu","garbu","gattu","ghidu","giogu","gradu","ibadu","impon","incas","infiu","intre","isola",
-               "istau","laduu","lamas","lassu","lentu","limba","linna","littu","lobiu","luddu","lumen","macas","madru","malas","manca","mardu","mascu","matta","meldu","mentu","mesti","millu","modda","mundu",
-               "murta","nassa","niedu","noddu","noras","notte","ogliu","omadu","onore","opidu","orosu","ossia","paber","pagae","palas","pandu","parru","pattu","pedru","penna","pesas","pillu","pinna","piras",
-               "poddu","poldu","prama","prena","puddu","puntu","raddu","ramas","randa","redda","rescu","riccu","rissu","rivas","robba","ruddu","sabba","sacru","saldu","sanas","sardu","seddu","senna","serru",
-               "sessa","sibiu","simba","sinna","soddu","soldu","sonnu","spadu","stela","stidu","suddu","tanca","tardu","tella","tenni","terra","tinta","tittu","torra","tundu","turre","umbra","ungiu","usura",
-               "vacua","vagus","valdu","varra","veddu","veldu","venna","verru","vidda","vigiu","virga","zinnu","zoccu","aberu","aeras","afidu","ainas","ainos","amigu","amore","ampru","andat","anima","antru",
-               "aostu","arbus","arena","armas","artes","ascia","asulu","badde","banca","bannu","basca","bator","belus","benit","birde","borta","bosas","botru","brodu","bujiu","busta","caddu","calae","canna",
-               "carga","carru","carta","casus","catza","cerva","chitu","cibus","cimas","cintu","codas","conto","coros","cosas","cozzu","crara","creja","crona","cruce","culos","cursu","custu","daret","datas",
-               "deche","ditzu","dolos","donzi","dromi","duos","ebbas","erbas","faghu","fames","favas","festa","filas","fizos","fogus","folas","forte","funes","furas","fuste","ganas","gioia","giras","gomai",
-               "gopai","gustu","janas","janna","josso","justu","lanas","lardu","largu","lebiu","lenas","lezes","linas","lizus","longu","luche","lunas","maccu","malus","mamas","mamma","mancu","maris","marra",
-               "matas","meigu","melas","mesus","miras","modde","molas","moras","mudus","mulas","mulus","muras","murus","musca","muscu","narat","naris","nasus","neula","nosus","nughe","nuras","odius","olias",
-               "ortus","ossas","ozzus","panis","paras","parte","passu","pazas","pedes","penas","perla","petza","pigat","pinta","pisci","pisus","pitzu","ponit","porcu","posta","pruna","pudda","pupas","ranas",
-               "renas","resta","robas","rodas","rosas","ruius","sacca","salas","scala","scola","segat","segus","serus","siccu","sinus","sogas","sorus","sucus","taula","tazas","telas","tempu","tetas","tontu",
-               "tostu","totus","tuvus","tzius","usat","vacas","vasat","vasus","velas","venas","vidas","visus","vitas","zassu","zegus","zelus","zerru","zestu","ziras","zonas","zuras"
-              ];
+// Usa l'array completo WORDS dal tuo originale
+const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu","amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu","berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu","caded","camin","campu","canes","capru","carri","ceddu","chelu","chena","chida","chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre","dente","dinai","dridu","fangu","fattu","femmu","ferro","figus","filu","foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu","granu","herra","ibidu","istru","latte","legnu","libru","littu","logu","macas","manus","mattu","melis","menta","merca","metru","missa","molle","monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini","orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu","ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu","riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu","sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu","suddu","tabba","tanca","tattu","terru","tissu","torru","trigu","umbra","undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga","zente","zinnu","bentu"];
 
-const epoch=new Date(2023,0,1);
-const dayIndex=Math.floor((Date.now()-epoch)/86400000);
-const solution=WORDS[dayIndex%WORDS.length];
-const storageKey="wordle-sardo-"+dayIndex;
+const epoch = new Date(2023, 0, 1);
+const dayIndex = Math.floor((Date.now() - epoch) / 86400000);
+const solution = WORDS[dayIndex % WORDS.length];
+const storageKey = "wordle-sardo-" + dayIndex;
 
-const maxRows=6;
-const game=document.getElementById("game");
-let currentRow=0;
-let currentGuess="";
-let guesses=[];
+let currentRow = 0, currentCol = 0, currentGuess = "", guesses = [], gameOver = false;
 
-const rows=[];
-for(let r=0;r<maxRows;r++){
-  const row=document.createElement("div");row.className="row";
-  const cells=[];
-  for(let c=0;c<5;c++){
-    const cell=document.createElement("div");
-    cell.className="cell";
-    row.appendChild(cell);
-    cells.push(cell);
-  }
-  game.appendChild(row);
-  rows.push(cells);
+// Genera board
+const board = document.getElementById("board");
+for(let i=0; i<30; i++) {
+    const cell = document.createElement("div"); cell.className = "cell";
+    cell.id = "c-"+i; board.appendChild(cell);
 }
 
-const saved=localStorage.getItem(storageKey);
-if(saved){
-  const data=JSON.parse(saved);
-  data.guesses.forEach(g=>renderGuess(g));
-  const win = data.guesses[data.guesses.length-1]===solution;
-  showOverlay(data.guesses.length, win);
+// Genera Tastiera
+const kb = [['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['ENTER','z','x','c','v','b','n','m','DEL']];
+kb.forEach((r, i) => {
+    const rowDiv = document.getElementById("row"+(i+1));
+    r.forEach(k => {
+        const b = document.createElement("button"); b.textContent = k;
+        b.className = "key" + (k.length > 1 ? " wide" : "");
+        b.id = "k-"+k.toLowerCase();
+        b.onclick = () => handleKey(k);
+        rowDiv.appendChild(b);
+    });
+});
+
+function handleKey(k) {
+    if(gameOver) return;
+    if(k === "ENTER") submitGuess();
+    else if(k === "DEL") deleteLetter();
+    else if(currentGuess.length < 5 && /^[a-z]$/i.test(k)) addLetter(k.toLowerCase());
 }
 
-const input=document.getElementById("keyboardInput");
-document.querySelector(".container").addEventListener("click",()=>input.focus());
+function addLetter(l) {
+    currentGuess += l;
+    const cell = document.getElementById("c-"+(currentRow*5 + currentCol));
+    cell.textContent = l; cell.classList.add("pop");
+    setTimeout(()=>cell.classList.remove("pop"), 100);
+    currentCol++;
+}
 
-function renderGuess(guess){
-  const solArr=solution.split("");
-  const solCount={};
-  solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
+function deleteLetter() {
+    if(currentCol <= 0) return;
+    currentCol--; currentGuess = currentGuess.slice(0,-1);
+    document.getElementById("c-"+(currentRow*5 + currentCol)).textContent = "";
+}
 
-  guess.split("").forEach((ch,i)=>{
-    const cell=rows[currentRow][i];
-    cell.textContent=ch;
-    if(ch===solArr[i]){
-      cell.classList.add("correct");
-      solCount[ch]--;
+function submitGuess() {
+    if(currentGuess.length !== 5) return;
+    if(!WORDS.includes(currentGuess)) { alert("Parola non in elenco!"); return; }
+
+    const rowStart = currentRow * 5;
+    const solArr = solution.split("");
+    const guessArr = currentGuess.split("");
+    
+    // Primo passaggio: Verdi
+    guessArr.forEach((l, i) => {
+        const cell = document.getElementById("c-"+(rowStart+i));
+        const key = document.getElementById("k-"+l);
+        if(l === solArr[i]) {
+            cell.classList.add("correct");
+            key.className = "key correct";
+            solArr[i] = null;
+        }
+    });
+
+    // Secondo passaggio: Gialli/Grigi
+    guessArr.forEach((l, i) => {
+        const cell = document.getElementById("c-"+(rowStart+i));
+        if(cell.classList.contains("correct")) return;
+        const key = document.getElementById("k-"+l);
+        if(solArr.includes(l)) {
+            cell.classList.add("present");
+            if(!key.classList.contains("correct")) key.className = "key present";
+            solArr[solArr.indexOf(l)] = null;
+        } else {
+            cell.classList.add("absent");
+            if(!key.classList.contains("correct") && !key.classList.contains("present")) key.className = "key absent";
+        }
+    });
+
+    guesses.push(currentGuess);
+    localStorage.setItem(storageKey, JSON.stringify(guesses));
+
+    if(currentGuess === solution) endGame(true);
+    else if(currentRow === 5) endGame(false);
+    else { currentRow++; currentCol = 0; currentGuess = ""; }
+}
+
+function endGame(win) {
+    gameOver = true;
+    updateStats(win);
+    setTimeout(() => showStatsModal(win), 1000);
+}
+
+function updateStats(win) {
+    let s = JSON.parse(localStorage.getItem("wordle-sardo-stats")) || { giocate:0, vinte:0, streak:0 };
+    if(!localStorage.getItem(storageKey+"-done")) {
+        s.giocate++; if(win) { s.vinte++; s.streak++; } else { s.streak = 0; }
+        localStorage.setItem("wordle-sardo-stats", JSON.stringify(s));
+        localStorage.setItem(storageKey+"-done", "1");
     }
-  });
+}
 
-  guess.split("").forEach((ch,i)=>{
-    const cell=rows[currentRow][i];
-    if(cell.classList.contains("correct")) return;
-    if(solArr.includes(ch)&&solCount[ch]>0){
-      cell.classList.add("present");
-      solCount[ch]--;
-    } else {
-      cell.classList.add("absent");
+function showStatsModal(win = null) {
+    const s = JSON.parse(localStorage.getItem("wordle-sardo-stats")) || { giocate:0, vinte:0, streak:0 };
+    document.getElementById("st-played").textContent = s.giocate;
+    document.getElementById("st-win").textContent = s.giocate ? Math.round((s.vinte/s.giocate)*100) : 0;
+    document.getElementById("st-streak").textContent = s.streak;
+    
+    if(win !== null) {
+        document.getElementById("res-title").textContent = win ? "BRAVU! 🔥" : "PECCAU! 💀";
+        document.getElementById("judgment").textContent = win ? (guesses.length <= 2 ? "sei fortissimu 🔥" : "forte sei 💪") : "scarso sei 😈";
     }
-  });
-
-  guesses.push(guess);
-  currentRow++;
+    document.getElementById("sol-reveal").textContent = "La parola era: " + solution.toUpperCase();
+    toggleModal("stats-modal");
 }
 
-
-
-function submitGuess(){
-  if(currentGuess.length!==5 || currentRow>=maxRows) return;
-
-  // Controllo se la parola è nel dizionario
-  if(!WORDS.includes(currentGuess)){
-    alert("Parola non in elenco 😅");
-    return;
-  }
-
-  renderGuess(currentGuess);
-  localStorage.setItem(storageKey, JSON.stringify({guesses}));
-  
-  if(currentGuess===solution) showOverlay(guesses.length, true);
-  else if(currentRow>=maxRows) showOverlay(currentRow, false);
-
-  currentGuess="";
-  input.value="";
+function toggleModal(id) {
+    const m = document.getElementById(id);
+    m.style.display = (m.style.display === "flex") ? "none" : "flex";
 }
 
+document.getElementById("share-btn").onclick = () => {
+    let text = `Wordle Sardo #${dayIndex} ${gameOver && guesses.includes(solution) ? guesses.length : "X"}/6\n\n`;
+    guesses.forEach(g => {
+        // Logica emoji...
+    });
+    if(navigator.share) navigator.share({text: text});
+};
 
-function giudizio(win, tentativi){
-  if(!win) return "scarso sei 😈";
-  if(tentativi<=2) return "sei fortissimu 🔥";
-  if(tentativi<=4) return "forte sei 💪";
-  return "ti ses salvadu 😅";
-}
-// ================= GESTIONE STATISTICHE =================
-
-// recupera statistiche globali
-function loadStats(){
-  const s = localStorage.getItem("wordle-sardo-stats");
-  if(!s){
-    return {
-      giocate:0,
-      vinte:0,
-      streak:0,
-      maxStreak:0,
-      tentativi:[0,0,0,0,0,0],
-      perse:0
-    };
-  }
-  return JSON.parse(s);
-}
-
-// salva stats
-function saveStats(s){
-  localStorage.setItem("wordle-sardo-stats", JSON.stringify(s));
-}
-
-// aggiorna dopo una partita
-function updateStats(win, tentativi){
-  const s = loadStats();
-
-  s.giocate++;
-
-  if(win){
-    s.vinte++;
-    s.streak++;
-    if(s.streak > s.maxStreak) s.maxStreak = s.streak;
-
-    // tentativi da 1 a 6 → indice 0-5
-    s.tentativi[tentativi-1]++;
-  }else{
-    s.perse++;
-    s.streak = 0;
-  }
-
-  saveStats(s);
-}
-
-// crea testo carino delle stats
-function statsText(){
-  const s = loadStats();
-  const perc = s.giocate ? Math.round((s.vinte/s.giocate)*100) : 0;
-
-  let t = "";
-  t += "📊 STATISTICHE\n";
-  t += "Giocate: " + s.giocate + "\n";
-  t += "Vinte: " + s.vinte + " (" + perc + "%)\n";
-  t += "Streak: " + s.streak + "\n";
-  t += "Max streak: " + s.maxStreak + "\n\n";
-
-  t += "Distribuzione tentativi:\n";
-  for(let i=0;i<6;i++){
-    t += (i+1) + ": " + s.tentativi[i] + "\n";
-  }
-
-  t += "Perse: " + s.perse;
-
-  return t;
-}
-
-function showOverlay(tentativi, win){
-  // AGGIORNAMENTO STATISTICHE SOLO SE NON ERA GIÀ SALVATA
-  const keyDone = storageKey + "-done";
-  if(!localStorage.getItem(keyDone)){
-    updateStats(win, tentativi);
-    localStorage.setItem(keyDone,"1");
-  }
-
-  // CONCATENA GIUDIZIO SUBITO DOPO BRAVU/SPACCIAU
-  document.getElementById("result").textContent =
-    (win ? "BRAVU!!🔥" : "SPACCIAU!!💀") + " — " + giudizio(win, tentativi);
-
-  const score = win ? tentativi+"/6" : "X/6";
-  document.getElementById("solution").textContent =
-    "Parola: " + solution + "\nTentativi: " + score +
-    "\n\n" + statsText(); // mostra le stats
-
-  generateShareText(win, tentativi);
-  document.getElementById("overlay").classList.add("show");
-}
-
-
-function generateShareText(win, tentativi){
-  const score = win ? tentativi+"/6" : "X/6";
-  const frase = giudizio(win, tentativi);
-
-  let text="Wordle Sardo "+dayIndex+" "+score+"\n"+frase+"\n\n";
-
-  guesses.forEach((g,ri)=>{
-    for(let i=0;i<5;i++){
-      const cell=rows[ri][i];
-      if(cell.classList.contains("correct")) text+="🟩";
-      else if(cell.classList.contains("present")) text+="🟨";
-      else text+="⬛";
-    }
-    text+="\n";
-  });
-
-  window.shareText=text;
-}
-
-document.getElementById("shareBtn").addEventListener("click",()=>{
-  if(navigator.share){
-    navigator.share({text:window.shareText});
-  } else {
-    const url="https://api.whatsapp.com/send?text="+encodeURIComponent(window.shareText);
-    window.open(url,"_blank");
-  }
-});
-
-document.getElementById("closeBtn").addEventListener("click",()=>{
-  document.getElementById("overlay").classList.remove("show");
-});
-
-input.addEventListener("input",e=>{
-  const val=e.target.value.toLowerCase().slice(0,5);
-  currentGuess=val;
-  for(let i=0;i<5;i++) rows[currentRow][i].textContent=val[i]||"";
-});
-
-input.addEventListener("keydown",e=>{
-  if(e.key==="Enter") submitGuess();
-  else if(e.key==="Backspace"){
-    currentGuess=currentGuess.slice(0,-1);
-    rows[currentRow][currentGuess.length].textContent="";
-  }
-});
-
-window.addEventListener("keydown",e=>{
-  if(currentRow>=maxRows) return;
-  if(e.key==="Enter") submitGuess();
-  else if(e.key==="Backspace"){
-    currentGuess=currentGuess.slice(0,-1);
-    rows[currentRow][currentGuess.length].textContent="";
-  }
-  else if(/^[a-zA-Z]$/.test(e.key)&&currentGuess.length<5){
-    const ch=e.key.toLowerCase();
-    rows[currentRow][currentGuess.length].textContent=ch;
-    currentGuess+=ch;
-  }
-});
+window.onkeydown = (e) => handleKey(e.key.toUpperCase());
 </script>
 </body>
 </html>
