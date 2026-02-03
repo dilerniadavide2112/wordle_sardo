@@ -6,45 +6,28 @@
 <title>Wordle Sardo</title>
 <style>
   body { font-family: system-ui, sans-serif; background:#111; color:#eee; display:flex; justify-content:center; }
-  .container { 
-    margin-top:30px; 
-    text-align:center; 
-    width:95vw;       
-    max-width:500px;  
-    position:relative;
-  }
+  .container { margin-top:30px; text-align:center; width:95vw; max-width:500px; position:relative; }
   h1 { letter-spacing:0.3em; margin-bottom:20px; }
   .row { display:flex; justify-content:center; }
-  .cell { 
-    flex: 1 1 18%; 
-    min-width:40px; max-width:60px; 
-    height:auto; aspect-ratio:1/1; 
-    border:2px solid #333; 
-    margin:3px; 
-    display:flex; align-items:center; justify-content:center; 
-    font-size:24px; font-weight:600; text-transform:uppercase;
-  }
+  .cell { flex: 1 1 18%; min-width:40px; max-width:60px; height:auto; aspect-ratio:1/1; border:2px solid #333; margin:3px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:600; text-transform:uppercase; }
   .correct { background:#538d4e; border-color:#538d4e; }
   .present { background:#b59f3b; border-color:#b59f3b; }
   .absent { background:#3a3a3c; border-color:#3c3c3c; }
-
   @keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
   .modal{background:#222;padding:30px;border-radius:12px;animation:pop .3s ease-out;text-align:center;}
   .modal h2{letter-spacing:.2em;margin-bottom:10px;}
   .show{display:flex;}
-
-  /* input mobile invisibile */
   #keyboardInput {
-    position:absolute;
-    bottom:0; 
-    left:50%;
-    transform:translateX(-50%);
-    width:90%;
-    height:50px;
-    opacity:0.01;
-    font-size:24px;
-    outline:none;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 50px;
+    opacity: 0.01;
+    font-size: 24px;
+    outline: none;
+    bottom: 0;
   }
 </style>
 </head>
@@ -117,11 +100,9 @@ if(saved){
   data.guesses.forEach(g => renderGuess(g));
 }
 
-// input mobile
 const input = document.getElementById("keyboardInput");
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-// centra input sulla riga corrente (solo desktop)
 function positionInput(){
   if(isMobile) return;
   const rowRect = rows[currentRow]?.[0]?.getBoundingClientRect();
@@ -141,7 +122,6 @@ document.querySelector(".container").addEventListener("click", () => {
   }
 });
 
-// invio parola
 function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
 
@@ -154,15 +134,13 @@ function submitGuess(){
 
   currentGuess="";
   input.value="";
-
   positionInput();
 }
 
-// colorazione celle con gestione doppie lettere
 function renderGuess(guess){
   const solArr = solution.split("");
-  const used = {}; 
-  solArr.forEach(ch => used[ch] = (used[ch]||0)+1);
+  const used = {};
+  solArr.forEach(ch => used[ch]=(used[ch]||0)+1);
 
   // verdi
   guess.split("").forEach((ch,i)=>{
@@ -191,14 +169,13 @@ function renderGuess(guess){
   positionInput();
 }
 
-// fine gioco
 function endGame(win){
   document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
   document.getElementById("solution").textContent = "Parola: " + solution.toUpperCase();
   document.getElementById("overlay").classList.add("show");
 }
 
-// gestione input mobile
+// input mobile
 input.addEventListener("input", e=>{
   const val = e.target.value.toLowerCase().slice(0,5);
   currentGuess = val;
@@ -222,8 +199,8 @@ window.addEventListener("keydown", e=>{
     rows[currentRow][currentGuess.length].textContent="";
   } else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
     const ch = e.key.toLowerCase();
-    rows[currentRow][currentGuess.length].textContent=ch;
-    currentGuess+=ch;
+    rows[currentRow][currentGuess.length].textContent = ch;
+    currentGuess += ch;
   }
 });
 </script>
