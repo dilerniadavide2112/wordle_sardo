@@ -80,10 +80,10 @@ const saved=localStorage.getItem(storageKey);
 if(saved){
   const data=JSON.parse(saved);
   data.guesses.forEach(g=>renderGuess(g));
-  showOverlay(data.guesses.length);
+  const win = data.guesses[data.guesses.length-1]===solution;
+  showOverlay(data.guesses.length, win);
 }
 
-// input mobile
 const input=document.getElementById("keyboardInput");
 document.querySelector(".container").addEventListener("click",()=>input.focus());
 
@@ -99,24 +99,34 @@ function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
   renderGuess(currentGuess);
   localStorage.setItem(storageKey, JSON.stringify({guesses}));
-  if(currentGuess===solution) showOverlay(currentRow);
-  else if(currentRow>=maxRows) showOverlay(currentRow);
+  if(currentGuess===solution) showOverlay(currentRow, true);
+  else if(currentRow>=maxRows) showOverlay(currentRow, false);
   currentGuess="";
   input.value="";
 }
 
-function showOverlay(tentativi){
-  document.getElementById("result").textContent=tentativi<=maxRows && guesses[guesses.length-1]===solution ? "BRAVU" : "FINIDU";
-  document.getElementById("solution").textContent="Tentativi: "+tentativi+"/"+maxRows;
-  generateShareText();
+function showOverlay(tentativi, win){
+  document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
+  const display = win ? tentativi+"/6" : "X/6";
+  document.getElementById("solution").textContent="Tentativi: "+display;
+  generateShareText(win, tentativi);
   document.getElementById("overlay").classList.add("show");
 }
 
-function generateShareText(){
-  let text="Wordle Sardo "+dayIndex+" "+guesses.length+"/"+maxRows+"\n\n";
-  guesses.forEach(g=>{
+function giudizio(win, tentativi){
+  if(!win) return "sei scarso 😈";
+  if(tentativi<=2) return "sei fortissimu 🔥";
+  if(tentativi<=4) return "sei forte 💪";
+  return "ti ses salvadu 😅";
+}
+
+function generateShareText(win, tentativi){
+  const score = win ? tentativi+"/6" : "X/6";
+  const frase = giudizio(win, tentativi);
+  let text="Wordle Sardo "+dayIndex+" "+score+"\n"+frase+"\n\n";
+  guesses.forEach((g,ri)=>{
     for(let i=0;i<5;i++){
-      const cell=rows[guesses.indexOf(g)][i];
+      const cell=rows[ri][i];
       if(cell.classList.contains("correct")) text+="🟩";
       else if(cell.classList.contains("present")) text+="🟨";
       else text+="⬛";
@@ -126,7 +136,6 @@ function generateShareText(){
   window.shareText=text;
 }
 
-// condividi
 document.getElementById("shareBtn").addEventListener("click",()=>{
   if(navigator.share){
     navigator.share({text:window.shareText});
@@ -140,7 +149,6 @@ document.getElementById("closeBtn").addEventListener("click",()=>{
   document.getElementById("overlay").classList.remove("show");
 });
 
-// input mobile
 input.addEventListener("input",e=>{
   const val=e.target.value.toLowerCase().slice(0,5);
   currentGuess=val;
@@ -155,12 +163,18 @@ input.addEventListener("keydown",e=>{
   }
 });
 
-// tastiera PC
 window.addEventListener("keydown",e=>{
   if(currentRow>=maxRows) return;
   if(e.key==="Enter") submitGuess();
-  else if(e.key==="Backspace"){currentGuess=currentGuess.slice(0,-1);rows[currentRow][currentGuess.length].textContent="";}
-  else if(/^[a-zA-Z]$/.test(e.key)&&currentGuess.length<5){const ch=e.key.toLowerCase();rows[currentRow][currentGuess.length].textContent=ch;currentGuess+=ch;}
+  else if(e.key==="Backspace"){
+    currentGuess=currentGuess.slice(0,-1);
+    rows[currentRow][currentGuess.length].textContent="";
+  }
+  else if(/^[a-zA-Z]$/.test(e.key)&&currentGuess.length<5){
+    const ch=e.key.toLowerCase();
+    rows[currentRow][currentGuess.length].textContent=ch;
+    currentGuess+=ch;
+  }
 });
 </script>
 </body>
