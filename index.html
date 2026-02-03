@@ -146,8 +146,27 @@ function submitGuess(){
 
 // gestione input mobile visibile
 const input = document.getElementById("keyboardInput");
-document.querySelector(".container").addEventListener("click", () => input.focus());
 
+
+
+
+document.querySelector(".container").addEventListener("click", () => {
+  input.focus();
+  // azzera input e griglia della riga corrente se non completata
+  currentGuess = "";
+  for(let i=0;i<5;i++){
+    rows[currentRow][i].textContent = "";
+  }
+  input.value = "";
+});
+
+
+
+
+
+
+
+  
 input.addEventListener("input", e => {
   const val = e.target.value.toLowerCase().slice(0,5);
   currentGuess = val;
