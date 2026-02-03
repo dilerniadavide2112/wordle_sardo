@@ -58,7 +58,7 @@ const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu",
 "undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga",
 "zente","zinnu","bentu"];
 
-const epoch=new Date(2024,0,1);
+const epoch=new Date(2025,0,1);
 const dayIndex=Math.floor((Date.now()-epoch)/86400000);
 const solution=WORDS[dayIndex%WORDS.length];
 const storageKey="wordle-sardo-"+dayIndex;
