@@ -25,7 +25,11 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
 </head>
 <body>
 <div class="container">
-<h1>WORDLE SARDO</h1>
+<h1>
+  WORDLE SARDO
+  <img src="sardegna.png" alt="Bandiera sarda"
+       style="height:28px; vertical-align:middle; margin-left:8px;">
+</h1>
 <div id="game"></div>
 <input id="keyboardInput" type="text" maxlength="5" autocorrect="off" autocomplete="off" spellcheck="false">
 </div>
@@ -104,14 +108,20 @@ function parolaSospetta(w){
 
 function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
+
+  if(parolaSospetta(currentGuess)){
+    alert("Parola non valida 😅");
+    return;
+  }
+
   renderGuess(currentGuess);
   localStorage.setItem(storageKey, JSON.stringify({guesses}));
 
   if(currentGuess===solution) showOverlay(currentRow, true);
   else if(currentRow>=maxRows) showOverlay(currentRow, false);
-if(parolaSospetta(currentGuess)){
-  alert("Parola non valida 😅");
-  return;
+
+  currentGuess="";
+  input.value="";
 }
 
   currentGuess="";
