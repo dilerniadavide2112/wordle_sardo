@@ -95,6 +95,12 @@ function renderGuess(guess){
   guess.split("").forEach((ch,i)=>{const cell=rows[currentRow][i];if(cell.classList.contains("correct")) return;if(solArr.includes(ch)&&solCount[ch]>0){cell.classList.add("present");solCount[ch]--;}else{cell.classList.add("absent");}});
   guesses.push(guess);currentRow++;
 }
+function parolaSospetta(w){
+  if(/^(.)\1{4}$/.test(w)) return true; // aaaaa
+  if(/^[aeiou]{5}$/.test(w)) return true; // aeiou
+  if(!/[aeiou].*[aeiou]/.test(w)) return true; // zero vocali vere
+  return false;
+}
 
 function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
@@ -103,6 +109,10 @@ function submitGuess(){
 
   if(currentGuess===solution) showOverlay(currentRow, true);
   else if(currentRow>=maxRows) showOverlay(currentRow, false);
+if(parolaSospetta(currentGuess)){
+  alert("Parola non valida 😅");
+  return;
+}
 
   currentGuess="";
   input.value="";
