@@ -155,19 +155,94 @@ function giudizio(win, tentativi){
   if(tentativi<=4) return "forte sei 💪";
   return "ti ses salvadu 😅";
 }
+// ================= GESTIONE STATISTICHE =================
+
+// recupera statistiche globali
+function loadStats(){
+  const s = localStorage.getItem("wordle-sardo-stats");
+  if(!s){
+    return {
+      giocate:0,
+      vinte:0,
+      streak:0,
+      maxStreak:0,
+      tentativi:[0,0,0,0,0,0],
+      perse:0
+    };
+  }
+  return JSON.parse(s);
+}
+
+// salva stats
+function saveStats(s){
+  localStorage.setItem("wordle-sardo-stats", JSON.stringify(s));
+}
+
+// aggiorna dopo una partita
+function updateStats(win, tentativi){
+  const s = loadStats();
+
+  s.giocate++;
+
+  if(win){
+    s.vinte++;
+    s.streak++;
+    if(s.streak > s.maxStreak) s.maxStreak = s.streak;
+
+    // tentativi da 1 a 6 → indice 0-5
+    s.tentativi[tentativi-1]++;
+  }else{
+    s.perse++;
+    s.streak = 0;
+  }
+
+  saveStats(s);
+}
+
+// crea testo carino delle stats
+function statsText(){
+  const s = loadStats();
+  const perc = s.giocate ? Math.round((s.vinte/s.giocate)*100) : 0;
+
+  let t = "";
+  t += "📊 STATISTICHE\n";
+  t += "Giocate: " + s.giocate + "\n";
+  t += "Vinte: " + s.vinte + " (" + perc + "%)\n";
+  t += "Streak: " + s.streak + "\n";
+  t += "Max streak: " + s.maxStreak + "\n\n";
+
+  t += "Distribuzione tentativi:\n";
+  for(let i=0;i<6;i++){
+    t += (i+1) + ": " + s.tentativi[i] + "\n";
+  }
+
+  t += "Perse: " + s.perse;
+
+  return t;
+}
 
 function showOverlay(tentativi, win){
+
+  // AGGIORNAMENTO STATISTICHE SOLO SE NON ERA GIÀ SALVATA
+  const keyDone = storageKey + "-done";
+  if(!localStorage.getItem(keyDone)){
+    updateStats(win, tentativi);
+    localStorage.setItem(keyDone,"1");
+  }
+
   document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
 
   const score = win ? tentativi+"/6" : "X/6";
   document.getElementById("solution").textContent =
-    "Parola: " + solution + "\nTentativi: " + score;
+    "Parola: " + solution + "\nTentativi: " + score +
+    "\n\n" + statsText();   // ← QUI MOSTRA LE STATS
 
   document.getElementById("judgment").textContent = giudizio(win, tentativi);
 
   generateShareText(win, tentativi);
   document.getElementById("overlay").classList.add("show");
 }
+
 
 function generateShareText(win, tentativi){
   const score = win ? tentativi+"/6" : "X/6";
