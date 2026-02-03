@@ -62,7 +62,7 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
 /* input mobile invisibile ma touchable */
 #keyboardInput {
   position:absolute;
-  bottom:0; /* bordo inferiore */
+  bottom:0;
   left:50%;
   transform:translateX(-50%);
   width:90%;
@@ -70,14 +70,20 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
   opacity:0.01;
   font-size:24px;
 }
+#shareBtn {
+  margin-top:20px;
+  padding:10px 20px;
+  font-size:16px;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>WORDLE SARDO</h1>
   <div id="game"></div>
-  <input id="keyboardInput" type="text" maxlength="5" 
-       autocorrect="off" autocomplete="off" spellcheck="false">
+  <input id="keyboardInput" type="text" maxlength="5" autocorrect="off" autocomplete="off" spellcheck="false">
+  <button id="shareBtn">Condividi</button>
 </div>
 
 <div id="overlay" class="overlay">
@@ -135,20 +141,45 @@ for(let r=0;r<maxRows;r++){
   rows.push(cells);
 }
 
-// ripristino stato
+// ripristino da localStorage o da URL
 const saved = localStorage.getItem(storageKey);
 if(saved){
   const data = JSON.parse(saved);
   data.guesses.forEach(g=>renderGuess(g));
 }
 
-// render corretto
+// controlla param history in URL
+const params = new URLSearchParams(window.location.search);
+const historyParam = params.get("history");
+if(historyParam){
+  try{
+    const decoded = JSON.parse(atob(historyParam));
+    decoded.forEach(g=>renderGuess(g));
+  }catch(e){console.error("Errore decodifica history", e);}
+}
+
+// input mobile
+const input = document.getElementById("keyboardInput");
+document.querySelector(".container").addEventListener("click",()=>input.focus());
+
+// invio parola
+function submitGuess(){
+  if(currentGuess.length!==5 || currentRow>=maxRows) return;
+  renderGuess(currentGuess);
+  if(currentGuess===solution) endGame(true);
+  else if(currentRow>=maxRows) endGame(false);
+  localStorage.setItem(storageKey, JSON.stringify({guesses}));
+  currentGuess="";
+  input.value="";
+}
+
+// render corretto con doppie lettere
 function renderGuess(guess){
   const solArr = solution.split("");
   const solCount = {};
   solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
 
-  // prima passata: correct
+  // verdi
   guess.split("").forEach((ch,i)=>{
     const cell=rows[currentRow][i];
     cell.textContent=ch;
@@ -158,7 +189,7 @@ function renderGuess(guess){
     }
   });
 
-  // seconda passata: present
+  // gialli/assenti
   guess.split("").forEach((ch,i)=>{
     const cell=rows[currentRow][i];
     if(cell.classList.contains("correct")) return;
@@ -174,29 +205,18 @@ function renderGuess(guess){
   currentRow++;
 }
 
+// fine gioco
 function endGame(win){
   document.getElementById("result").textContent=win?"BRAVU":"FINIDU";
   document.getElementById("solution").textContent="Parola: "+solution.toUpperCase();
   document.getElementById("overlay").classList.add("show");
 }
 
-function submitGuess(){
-  if(currentGuess.length!==5 || currentRow>=maxRows) return;
-  renderGuess(currentGuess);
-  if(currentGuess===solution) endGame(true);
-  else if(currentRow>=maxRows) endGame(false);
-  localStorage.setItem(storageKey, JSON.stringify({guesses}));
-  currentGuess="";
-}
-
-// input mobile
-const input = document.getElementById("keyboardInput");
-document.querySelector(".container").addEventListener("click",()=>input.focus());
-
+// input events
 input.addEventListener("input",e=>{
-  const val = e.target.value.toLowerCase().slice(0,5);
-  currentGuess = val;
-  for(let i=0;i<5;i++) rows[currentRow][i].textContent = val[i] || "";
+  const val=e.target.value.toLowerCase().slice(0,5);
+  currentGuess=val;
+  for(let i=0;i<5;i++) rows[currentRow][i].textContent=val[i]||"";
 });
 
 input.addEventListener("keydown",e=>{
@@ -214,11 +234,26 @@ window.addEventListener("keydown",e=>{
   else if(e.key==="Backspace"){
     currentGuess=currentGuess.slice(0,-1);
     rows[currentRow][currentGuess.length].textContent="";
+  } else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
+    const ch=e.key.toLowerCase();
+    rows[currentRow][currentGuess.length].textContent=ch;
+    currentGuess+=ch;
   }
-  else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
-    const ch = e.key.toLowerCase();
-    rows[currentRow][currentGuess.length].textContent = ch;
-    currentGuess += ch;
+});
+
+// condivisione
+function getShareableLink(){
+  const encoded = btoa(JSON.stringify(guesses));
+  return window.location.origin + window.location.pathname + "?history=" + encoded;
+}
+
+document.getElementById("shareBtn").addEventListener("click",()=>{
+  const link = getShareableLink();
+  if(navigator.share){
+    navigator.share({ text:"Guarda il mio Wordle Sardo!", url:link });
+  }else{
+    navigator.clipboard.writeText(link);
+    alert("Link copiato negli appunti!");
   }
 });
 </script>
