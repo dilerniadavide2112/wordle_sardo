@@ -141,8 +141,7 @@ function submitGuess(){
 
   renderGuess(currentGuess);
   localStorage.setItem(storageKey, JSON.stringify({guesses}));
-
-  if(currentGuess===solution) showOverlay(currentRow, true);
+if(currentGuess===solution) showOverlay(guesses.length, true);
   else if(currentRow>=maxRows) showOverlay(currentRow, false);
 
   currentGuess="";
