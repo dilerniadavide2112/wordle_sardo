@@ -222,7 +222,6 @@ function statsText(){
 }
 
 function showOverlay(tentativi, win){
-
   // AGGIORNAMENTO STATISTICHE SOLO SE NON ERA GIÀ SALVATA
   const keyDone = storageKey + "-done";
   if(!localStorage.getItem(keyDone)){
@@ -230,14 +229,14 @@ function showOverlay(tentativi, win){
     localStorage.setItem(keyDone,"1");
   }
 
-  document.getElementById("result").textContent = win ? "BRAVU!!🔥" : "SPACCIAU!!💀";
+  // CONCATENA GIUDIZIO SUBITO DOPO BRAVU/SPACCIAU
+  document.getElementById("result").textContent =
+    (win ? "BRAVU!!🔥" : "SPACCIAU!!💀") + " — " + giudizio(win, tentativi);
 
   const score = win ? tentativi+"/6" : "X/6";
   document.getElementById("solution").textContent =
     "Parola: " + solution + "\nTentativi: " + score +
-    "\n\n" + statsText();   // ← QUI MOSTRA LE STATS
-
-  document.getElementById("judgment").textContent = giudizio(win, tentativi);
+    "\n\n" + statsText(); // mostra le stats
 
   generateShareText(win, tentativi);
   document.getElementById("overlay").classList.add("show");
