@@ -125,14 +125,14 @@ function renderGuess(guess){
 }
 
 
-// 2. SOSTITUISCI la funzione submitGuess con questa versione:
+
 function submitGuess(){
   if(currentGuess.length!==5 || currentRow>=maxRows) return;
 
-  // NUOVO CONTROLLO: Se la parola NON è inclusa nella lista WORDS
+  // Controllo se la parola è nel dizionario
   if(!WORDS.includes(currentGuess)){
-    alert("Parola non in elenco 😅"); // Messaggio se la parola non esiste nel dizionario
-    return; // Blocca il turno senza consumarlo
+    alert("Parola non in elenco 😅");
+    return;
   }
 
   renderGuess(currentGuess);
@@ -144,14 +144,7 @@ function submitGuess(){
   currentGuess="";
   input.value="";
 }
-  renderGuess(currentGuess);
-  localStorage.setItem(storageKey, JSON.stringify({guesses}));
-if(currentGuess===solution) showOverlay(guesses.length, true);
-  else if(currentRow>=maxRows) showOverlay(currentRow, false);
 
-  currentGuess="";
-  input.value="";
-}
 
 function giudizio(win, tentativi){
   if(!win) return "scarso sei 😈";
