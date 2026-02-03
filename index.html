@@ -204,6 +204,31 @@ document.getElementById("shareBtn").addEventListener("click",()=>{
   if(navigator.share){navigator.share({text:"Guarda il mio Wordle Sardo!",url:link});}
   else{navigator.clipboard.writeText(link);alert("Link copiato negli appunti!");}
 });
+
+function getShareText() {
+  const symbols = guesses.map(guess => {
+    return guess.split("").map((ch, i) => {
+      const solCh = solution[i];
+      if(ch === solCh) return "🟩";
+      else if(solution.includes(ch)) return "🟨";
+      else return "⬛";
+    }).join("");
+  }).join("\n");
+
+  const text = `Parola n°${dayIndex} Tentativas ${currentRow}/${maxRows}\n\n${symbols}`;
+  return text;
+}
+
+// pulsante condividi nel modal
+document.getElementById("shareBtn").addEventListener("click", () => {
+  const text = getShareText();
+  if(navigator.share){
+    navigator.share({text});
+  } else {
+    navigator.clipboard.writeText(text);
+    alert("Testo copiato negli appunti!");
+  }
+});
 </script>
 </body>
 </html>
