@@ -57,22 +57,19 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
   text-align:center;
 }
 .modal h2{letter-spacing:.2em;margin-bottom:10px;}
+.modal button { margin-top:10px; padding:5px 15px; font-size:16px; cursor:pointer; }
 .show{display:flex;}
+
+/* input mobile invisibile ma touchable */
 #keyboardInput {
   position:absolute;
-  bottom:0;
+  bottom:0; 
   left:50%;
   transform:translateX(-50%);
   width:90%;
   height:40px;
   opacity:0.01;
   font-size:24px;
-}
-#shareBtn {
-  margin-top:15px;
-  padding:10px 20px;
-  font-size:16px;
-  cursor:pointer;
 }
 </style>
 </head>
@@ -92,61 +89,97 @@ h1 { letter-spacing:0.3em; margin-bottom:20px; }
 </div>
 
 <script>
-// Dizionario e parola del giorno
-const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu","amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu",
-"berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu","caded","camin","campu","canes","capru","carri","ceddu","chelu","chena","chida",
-"chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre","dente","dinai","dridu","fangu","fattu","femmu","ferro","figus","filu",
-"foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu","granu","herra","ibidu","istru","latte","legnu","libru","littu","logu",
-"macas","manus","mattu","melis","menta","merca","metru","missa","molle","monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini",
-"orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu","ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu",
-"riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu","sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu",
-"suddu","tabba","tanca","tattu","terru","tissu","torru","trigu","umbra","undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga",
+// Dizionario
+const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu",
+"amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu",
+"berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu","caded",
+"camin","campu","canes","capru","carri","ceddu","chelu","chena","chida",
+"chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre",
+"dente","dinai","dridu","fangu","fattu","femmu","ferro","figus","filu",
+"foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu",
+"granu","herra","ibidu","istru","latte","legnu","libru","littu","logu",
+"macas","manus","mattu","melis","menta","merca","metru","missa","molle",
+"monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini",
+"orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu",
+"ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu",
+"riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu",
+"sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu",
+"suddu","tabba","tanca","tattu","terru","tissu","torru","trigu","umbra",
+"undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga",
 "zente","zinnu","bentu"];
-const epoch=new Date(2024,0,1);
-const dayIndex=Math.floor((Date.now()-epoch)/86400000);
-const solution=WORDS[dayIndex % WORDS.length];
-const storageKey="wordle-sardo-"+dayIndex;
 
-const maxRows=6;
-const game=document.getElementById("game");
-let currentRow=0,currentGuess="",guesses=[];
+// parola del giorno
+const epoch = new Date(2024,0,1);
+const dayIndex = Math.floor((Date.now() - epoch) / 86400000);
+const solution = WORDS[dayIndex % WORDS.length];
+const storageKey = "wordle-sardo-" + dayIndex;
+
+const maxRows = 6;
+const game = document.getElementById("game");
+let currentRow = 0;
+let currentGuess = "";
+let guesses = [];
 
 // griglia
-const rows=[];
+const rows = [];
 for(let r=0;r<maxRows;r++){
-  const row=document.createElement("div");row.className="row";
+  const row = document.createElement("div");
+  row.className="row";
   const cells=[];
   for(let c=0;c<5;c++){
-    const cell=document.createElement("div");cell.className="cell";
-    row.appendChild(cell);cells.push(cell);
+    const cell=document.createElement("div");
+    cell.className="cell";
+    row.appendChild(cell);
+    cells.push(cell);
   }
   game.appendChild(row);
   rows.push(cells);
 }
 
-// ripristino da localStorage
-const saved=localStorage.getItem(storageKey);
-if(saved){JSON.parse(saved).guesses.forEach(g=>renderGuess(g));}
+// ripristino stato
+const saved = localStorage.getItem(storageKey);
+if(saved){
+  const data = JSON.parse(saved);
+  data.guesses.forEach(g=>renderGuess(g));
+}
 
-// input mobile
-const input=document.getElementById("keyboardInput");
-document.querySelector(".container").addEventListener("click",()=>input.focus());
-
-// render con doppie lettere
+// render corretto con gestione doppie lettere
 function renderGuess(guess){
-  const solArr=solution.split("");
-  const solCount={};solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
+  const solArr = solution.split("");
+  const solCount = {};
+  solArr.forEach(ch=>solCount[ch]=(solCount[ch]||0)+1);
+
+  // correct
   guess.split("").forEach((ch,i)=>{
     const cell=rows[currentRow][i];
     cell.textContent=ch;
-    if(ch===solArr[i]){cell.classList.add("correct");solCount[ch]--;}
+    if(ch===solArr[i]){
+      cell.classList.add("correct");
+      solCount[ch]--;
+    }
   });
+
+  // present/absent
   guess.split("").forEach((ch,i)=>{
-    const cell=rows[currentRow][i];if(cell.classList.contains("correct")) return;
-    if(solArr.includes(ch) && solCount[ch]>0){cell.classList.add("present");solCount[ch]--;}
-    else cell.classList.add("absent");
+    const cell=rows[currentRow][i];
+    if(cell.classList.contains("correct")) return;
+    if(solArr.includes(ch) && solCount[ch]>0){
+      cell.classList.add("present");
+      solCount[ch]--;
+    } else {
+      cell.classList.add("absent");
+    }
   });
-  guesses.push(guess);currentRow++;
+
+  guesses.push(guess);
+  currentRow++;
+}
+
+// fine gioco
+function endGame(win){
+  document.getElementById("result").textContent = win ? "BRAVU" : "FINIDU";
+  document.getElementById("solution").textContent = "Parola: " + solution.toUpperCase();
+  document.getElementById("overlay").classList.add("show");
 }
 
 // invio parola
@@ -156,22 +189,20 @@ function submitGuess(){
   if(currentGuess===solution) endGame(true);
   else if(currentRow>=maxRows) endGame(false);
   localStorage.setItem(storageKey, JSON.stringify({guesses}));
-  currentGuess="";input.value="";
+  currentGuess="";
+  input.value="";
 }
 
-// fine gioco + mostra pulsante condividi
-function endGame(win){
-  document.getElementById("result").textContent=win?"BRAVU":"FINIDU";
-  document.getElementById("solution").textContent="Parola: "+solution.toUpperCase();
-  document.getElementById("overlay").classList.add("show");
-}
+// input mobile
+const input = document.getElementById("keyboardInput");
+document.querySelector(".container").addEventListener("click",()=>input.focus());
 
-// gestione input
 input.addEventListener("input",e=>{
-  const val=e.target.value.toLowerCase().slice(0,5);
-  currentGuess=val;
-  for(let i=0;i<5;i++) rows[currentRow][i].textContent=val[i]||"";
+  const val = e.target.value.toLowerCase().slice(0,5);
+  currentGuess = val;
+  for(let i=0;i<5;i++) rows[currentRow][i].textContent = val[i] || "";
 });
+
 input.addEventListener("keydown",e=>{
   if(e.key==="Enter") submitGuess();
   else if(e.key==="Backspace"){
@@ -179,6 +210,8 @@ input.addEventListener("keydown",e=>{
     rows[currentRow][currentGuess.length].textContent="";
   }
 });
+
+// tastiera PC
 window.addEventListener("keydown",e=>{
   if(currentRow>=maxRows) return;
   if(e.key==="Enter") submitGuess();
@@ -186,41 +219,27 @@ window.addEventListener("keydown",e=>{
     currentGuess=currentGuess.slice(0,-1);
     rows[currentRow][currentGuess.length].textContent="";
   } else if(/^[a-zA-Z]$/.test(e.key) && currentGuess.length<5){
-    const ch=e.key.toLowerCase();
+    const ch = e.key.toLowerCase();
     rows[currentRow][currentGuess.length].textContent=ch;
     currentGuess+=ch;
   }
 });
 
-// generazione link condivisibile
-function getShareableLink(){
-  const encoded=btoa(JSON.stringify(guesses));
-  return window.location.origin+window.location.pathname+"?history="+encoded;
-}
-
-// pulsante condividi nel modal
-document.getElementById("shareBtn").addEventListener("click",()=>{
-  const link=getShareableLink();
-  if(navigator.share){navigator.share({text:"Guarda il mio Wordle Sardo!",url:link});}
-  else{navigator.clipboard.writeText(link);alert("Link copiato negli appunti!");}
-});
-
-function getShareText() {
-  const symbols = guesses.map(guess => {
-    return guess.split("").map((ch, i) => {
+// genera testo condivisibile
+function getShareText(){
+  const symbols = guesses.map(guess=>{
+    return guess.split("").map((ch,i)=>{
       const solCh = solution[i];
-      if(ch === solCh) return "🟩";
+      if(ch===solCh) return "🟩";
       else if(solution.includes(ch)) return "🟨";
       else return "⬛";
     }).join("");
   }).join("\n");
-
-  const text = `Parola n°${dayIndex} Tentativas ${currentRow}/${maxRows}\n\n${symbols}`;
-  return text;
+  return `Parola n°${dayIndex} Tentativas ${currentRow}/${maxRows}\n\n${symbols}`;
 }
 
-// pulsante condividi nel modal
-document.getElementById("shareBtn").addEventListener("click", () => {
+// pulsante condividi
+document.getElementById("shareBtn").addEventListener("click",()=>{
   const text = getShareText();
   if(navigator.share){
     navigator.share({text});
