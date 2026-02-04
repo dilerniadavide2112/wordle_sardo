@@ -412,10 +412,11 @@ function updateKeyboard(guess, results) {
   const buttons = document.querySelectorAll("#keyboard button");
   
   guess.split("").forEach((letter, i) => {
-    const key = Array.from(buttons).find(b => b.textContent.toLowerCase() === letter);
+    // Usiamo trim() per pulire eventuali spazi e toLowerCase() per il confronto
+    const key = Array.from(buttons).find(b => b.textContent.trim().toLowerCase() === letter.toLowerCase());
+    
     if (!key) return;
 
-    // Logica di priorità: il verde batte il giallo, il giallo batte il grigio
     if (results[i] === "correct") {
       key.classList.remove("present", "absent");
       key.classList.add("correct");
@@ -427,7 +428,6 @@ function updateKeyboard(guess, results) {
     }
   });
 }
-
   
 function submitGuess() {
   if (!gameEnabled || currentGuess.length !== 5) return;
