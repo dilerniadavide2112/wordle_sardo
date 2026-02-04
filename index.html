@@ -361,7 +361,7 @@ function renderGuess(guess, shouldSave = true) {
     const rowCells = rows[currentRow];
     const results = new Array(5);
 
-    // Primo passaggio: identifica corretti
+    // Identifica corretti
     guess.split("").forEach((c, i) => {
         if (c === sol[i]) {
             results[i] = "correct";
@@ -369,7 +369,7 @@ function renderGuess(guess, shouldSave = true) {
         }
     });
 
-    // Secondo passaggio: identifica presenti o assenti
+    // Identifica presenti o assenti
     guess.split("").forEach((c, i) => {
         if (results[i]) return;
         if (sol.includes(c) && count[c] > 0) {
@@ -380,20 +380,18 @@ function renderGuess(guess, shouldSave = true) {
         }
     });
 
-    // Applicazione animazione con delay
+    // AGGIORNA LA TASTIERA QUI
+    updateKeyboard(guess, results);
+
+    // Animazione caselle
     guess.split("").forEach((c, i) => {
         const cell = rowCells[i];
-        
-        // Se stiamo ripristinando la sessione, non animare, colora subito
         if (!shouldSave) {
             cell.textContent = c.toUpperCase();
             cell.classList.add(results[i]);
         } else {
-            // Animazione a cascata (0.1s di distanza tra lettere)
             setTimeout(() => {
                 cell.classList.add("flip");
-                
-                // Cambia colore a metà rotazione (0.3s)
                 setTimeout(() => {
                     cell.textContent = c.toUpperCase();
                     cell.classList.add(results[i]);
@@ -409,7 +407,7 @@ function renderGuess(guess, shouldSave = true) {
         localStorage.setItem("wordleSardoState", JSON.stringify({day: dayIndex, guesses: guesses}));
     }
 }
-
+  
 function updateKeyboard(guess, results) {
   const buttons = document.querySelectorAll("#keyboard button");
   
@@ -580,9 +578,26 @@ async function doShare() {
         return;
     }
 
-    // Ricostruisce la griglia con i vecchi tentativi
+
+
+
+
+
+
+
+
+// Ricostruisce la griglia e la tastiera
     state.guesses.forEach(g => {
-        renderGuess(g, false); // false per non sovrascrivere il save mentre carichi
+        // Calcoliamo i risultati per la tastiera al volo
+        const sol = solution.split("");
+        const count = {};
+        sol.forEach(c => count[c] = (count[c] || 0) + 1);
+        const res = new Array(5);
+        g.split("").forEach((c,i)=>{ if(c===sol[i]){res[i]="correct"; count[c]--;}});
+        g.split("").forEach((c,i)=>{ if(!res[i]){ if(sol.includes(c)&&count[c]>0){res[i]="present"; count[c]--;}else res[i]="absent";}});
+        
+        updateKeyboard(g, res); // Colora i tasti
+        renderGuess(g, false);  // Colora la griglia
     });
 
     // Se la partita era già finita, blocca il gioco e mostra i risultati
