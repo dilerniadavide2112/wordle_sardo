@@ -336,7 +336,15 @@ for (let r = 0; r < maxRows; r++) {
   game.appendChild(row);
   rows.push(cells);
 }
-
+const SHARE_MESSAGES = {
+    1: "So un fìgu! 🔥",
+    2: "Foras de conca! ⚡",
+    3: "Piciocu de gabbale! ✨",
+    4: "Bravu meda! 👍",
+    5: "Duncas s'as fatta! 👏",
+    6: "In s'urtimu corpu! 😰",
+    loss: "Peccau, b'as a proare cras... 🪫"
+};
 const msg = document.getElementById("msg");
 const overlay = document.getElementById("overlay");
 const rulesOverlay = document.getElementById("rulesOverlay");
@@ -483,12 +491,17 @@ function buildShare() {
     gridText += rowEmoji + "\n";
   });
 
-  // Rimuoviamo eventuali spazi bianchi accidentali all'inizio o fine
   gridText = gridText.trim();
 
+  // Determina il messaggio in prima persona
+  const isWin = guesses[guesses.length - 1] === solution;
+  const personalComment = isWin ? SHARE_MESSAGES[guesses.length] : SHARE_MESSAGES.loss;
+
+  // Costruisce il testo finale per la condivisione
   window.shareText = "Wordle Sardo " + dayIndex + " " +
-    (guesses[guesses.length - 1] === solution ? guesses.length + "/6" : "X/6") +
-    "\n\n" + gridText;
+    (isWin ? guesses.length + "/6" : "X/6") + "\n" +
+    personalComment + "\n\n" + 
+    gridText;
 }
 function loadStats() {
   const stats = JSON.parse(localStorage.getItem("wordleSardoStats") || '{}');
