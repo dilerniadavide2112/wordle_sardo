@@ -1,3 +1,223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Wordle Sardo</title>
+<style>
+/* ===== RESET & BASE ===== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+.container {
+  width: 100%;
+  max-width: 420px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+h1 { letter-spacing: .3em; margin: 0; }
+.menu-btn { font-size: 26px; cursor: pointer; user-select: none; }
+
+/* ===== GAME GRID ===== */
+#game {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.cell {
+  width: 18%;
+  aspect-ratio: 1/1;
+  border: 2px solid #333;
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.correct { background: #538d4e; border-color: #538d4e; }
+.present { background: #b59f3b; border-color: #b59f3b; }
+.absent  { background: #3a3a3c; border-color: #3c3c3c; }
+
+/* ===== KEYBOARD ===== */
+#keyboard {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+.keyrow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+#keyboard button {
+  all: unset;
+  flex: 1 1 0;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #818384;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 16px;
+  min-width: 0;
+  max-width: 100%;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+#keyboard .wide { flex: 1.6 1 0; }
+
+/* ===== MESSAGES ===== */
+#msg { height: 22px; margin: 4px; color: #ff6666; font-size: 14px; }
+
+/* ===== OVERLAYS ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.show { display: flex; }
+.modal {
+  background: #222;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* ===== MENU ===== */
+.menu {
+  position: absolute;
+  top: 48px;
+  right: 12px;
+  background: #222;
+  border-radius: 10px;
+  padding: 10px;
+  display: none;
+  z-index: 5;
+}
+.menu button {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+}
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.primary { background: #538d4e; color: #fff; }
+.secondary { background: #555; color: #fff; }
+
+</style>
+</head>
+<body>
+
+<!-- START OVERLAY -->
+<div id="startOverlay" class="overlay show">
+  <div class="modal">
+    <h2>WORDLE SARDO</h2>
+    <button class="primary" id="startPlay">GIOCA</button>
+    <button class="secondary" id="openRules">REGOLE</button>
+  </div>
+</div>
+
+<!-- RULES OVERLAY -->
+<div id="rulesOverlay" class="overlay">
+  <div class="modal">
+    <h2>REGOLE</h2>
+    <p>Indovina sa parola de 5 letras in 6 tentativos.</p>
+    <p>🟩 giusta e postu giustu</p>
+    <p>🟨 giusta postu sbagliadu</p>
+    <p>⬛ non est in sa parola</p>
+    <button class="primary" id="rulesOk">OK</button>
+  </div>
+</div>
+
+<!-- END / RESULT OVERLAY -->
+<div id="overlay" class="overlay">
+  <div class="modal">
+    <h2 id="result"></h2>
+    <pre id="solution"></pre>
+    <button class="primary" id="shareBtn">Condividi</button>
+    <button class="secondary" id="closeBtn">Chiudi</button>
+  </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+  <header>
+    <h1>WORDLE</h1>
+    <div class="menu-btn" id="menuBtn">☰</div>
+  </header>
+
+  <!-- MENU A TENDINA -->
+  <div class="menu" id="menu">
+    <button class="secondary" id="menuRules">Regole</button>
+    <button class="secondary" id="menuShare">Condividi</button>
+    <button class="secondary" id="menuClose">Chiudi</button>
+  </div>
+
+  <!-- GAME GRID -->
+  <div id="game"></div>
+  <div id="msg"></div>
+
+  <!-- VIRTUAL KEYBOARD -->
+  <div id="keyboard">
+    <div class="keyrow">
+      <button>Q</button><button>W</button><button>E</button><button>R</button>
+      <button>T</button><button>Y</button><button>U</button><button>I</button>
+      <button>O</button><button>P</button>
+    </div>
+    <div class="keyrow">
+      <button>A</button><button>S</button><button>D</button><button>F</button>
+      <button>G</button><button>H</button><button>J</button><button>K</button>
+      <button>L</button>
+    </div>
+    <div class="keyrow">
+      <button class="wide">ENTER</button>
+      <button>Z</button><button>X</button><button>C</button>
+      <button>V</button><button>B</button><button>N</button><button>M</button>
+      <button class="wide">⌫</button>
+    </div>
+  </div>
+</div>
 <script>
 let gameEnabled = false;
 
