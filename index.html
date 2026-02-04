@@ -128,12 +128,15 @@ h1 { letter-spacing: .3em; margin: 0; }
 }
 
 #solution {
-  white-space: pre-wrap;       /* Forza il testo ad andare a capo */
-  word-wrap: break-word;       /* Spezza le parole lunghe */
-  font-family: inherit;        /* Usa lo stesso font del gioco */
-  font-size: 14px;
-  text-align: left;            /* Le statistiche si leggono meglio a sinistra */
-  display: inline-block;       /* Centra il blocco di testo */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', Courier, monospace; /* Fondamentale per l'allineamento emoji */
+  font-size: 18px;      /* Leggermente più grande per leggibilità */
+  text-align: center;
+  display: block;
+  margin: 10px auto;
+  line-height: 1.2;
+  padding: 0;           /* Rimuove padding interni al tag pre */
 }
 
 /* ===== MENU ===== */
@@ -328,20 +331,25 @@ function submitGuess() {
 
 // Generazione testo condivisibile
 function buildShare() {
-  let t = "";
+  let gridText = "";
   guesses.forEach((g, r) => {
+    let rowEmoji = "";
     for (let i = 0; i < 5; i++) {
       const c = rows[r][i];
-      t += c.classList.contains("correct") ? "🟩" : c.classList.contains("present") ? "🟨" : "⬛";
+      if (c.classList.contains("correct")) rowEmoji += "🟩";
+      else if (c.classList.contains("present")) rowEmoji += "🟨";
+      else rowEmoji += "⬛";
     }
-    t += "\n";
+    gridText += rowEmoji + "\n";
   });
 
-  window.shareText = "Wordle Sardo " + dayIndex + " " +
-    (guesses[guesses.length - 1] === solution ? guesses.length + "/6" : "X/6")
-    + "\n\n" + t;
-}
+  // Rimuoviamo eventuali spazi bianchi accidentali all'inizio o fine
+  gridText = gridText.trim();
 
+  window.shareText = "Wordle Sardo " + dayIndex + " " +
+    (guesses[guesses.length - 1] === solution ? guesses.length + "/6" : "X/6") +
+    "\n\n" + gridText;
+}
 function loadStats() {
   const stats = JSON.parse(localStorage.getItem("wordleSardoStats") || '{}');
   return {
