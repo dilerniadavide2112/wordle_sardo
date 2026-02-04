@@ -1,246 +1,5 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Wordle Sardo</title>
-
-<style>
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:system-ui,sans-serif;
-  background:#111;
-  color:#eee;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-}
-
-.container{
-  width:100%;
-  max-width:420px;
-  padding:8px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-header{
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:8px;
-}
-
-h1{letter-spacing:.3em;margin:0}
-
-.menu-btn{font-size:26px;cursor:pointer;user-select:none}
-
-#game{
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-.row{
-  width:100%;
-  display:flex;
-  justify-content:space-between;
-}
-
-.cell{
-  width:18%;
-  aspect-ratio:1/1;
-  border:2px solid #333;
-  margin:2px 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
-  font-weight:600;
-  text-transform:uppercase;
-}
-
-.correct{background:#538d4e;border-color:#538d4e}
-.present{background:#b59f3b;border-color:#b59f3b}
-.absent{background:#3a3a3c;border-color:#3c3c3c}
-
-/* ===== TASTIERA FIX IPHONE ===== */
-#keyboard{
-  width:100%;
-  margin-top:8px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-
-  /* prevenzione zoom iOS */
-  touch-action:manipulation;
-  -webkit-text-size-adjust:100%;
-}
-
-.keyrow{
-  width:100%;
-  display:flex;
-  justify-content:center;
-  gap:4px;
-  padding:0 4px;
-}
-
-#keyboard button{
-  all:unset;                     /* nuking stile iOS */
-  flex:1 1 0;                    /* larghezza elastica vera */
-  height:46px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  background:#818384;
-  color:#fff;
-  border-radius:6px;
-  font-weight:700;
-  font-size:16px;
-
-  /* magia anti-zoom */
-  min-width:0;
-  max-width:100%;
-  text-size-adjust:100%;
-  -webkit-text-size-adjust:100%;
-}
-
-#keyboard .wide{
-  flex:1.6 1 0;
-}
-
-/* ===== MESSAGGI ===== */
-#msg{
-  height:22px;
-  margin:4px;
-  color:#ff6666;
-  font-size:14px;
-}
-
-/* ===== OVERLAY ===== */
-.overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-
-.show{display:flex}
-
-.modal{
-  background:#222;
-  padding:24px;
-  border-radius:12px;
-  max-width:90%;
-  text-align:center;
-}
-
-.menu{
-  position:absolute;
-  top:48px;
-  right:12px;
-  background:#222;
-  border-radius:10px;
-  padding:10px;
-  display:none;
-  z-index:5;
-}
-
-.menu button{
-  display:block;
-  width:100%;
-  margin:6px 0;
-}
-
-button{
-  padding:10px 20px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.primary{background:#538d4e;color:#fff}
-.secondary{background:#555;color:#fff}
-</style>
-</head>
-
-<body>
-
-<div id="startOverlay" class="overlay show">
-  <div class="modal">
-    <h2>WORDLE SARDO</h2>
-    <button class="primary" id="startPlay">GIOCA</button>
-    <button class="secondary" id="openRules">REGOLE</button>
-  </div>
-</div>
-
-<div id="rulesOverlay" class="overlay">
-  <div class="modal">
-    <h2>REGOLE</h2>
-    <p>Indovina sa parola de 5 letras in 6 tentativos.</p>
-    <p>🟩 giusta e postu giustu</p>
-    <p>🟨 giusta postu sbagliadu</p>
-    <p>⬛ non est in sa parola</p>
-    <button class="primary" id="rulesOk">OK</button>
-  </div>
-</div>
-
-<div id="overlay" class="overlay">
-  <div class="modal">
-    <h2 id="result"></h2>
-    <pre id="solution"></pre>
-    <button class="primary" id="shareBtn">Condividi</button>
-    <button class="secondary" id="closeBtn">Chiudi</button>
-  </div>
-</div>
-
-<div class="container">
-  <header>
-    <h1>WORDLE</h1>
-    <div class="menu-btn" id="menuBtn">☰</div>
-  </header>
-
-  <div class="menu" id="menu">
-    <button class="secondary" id="menuRules">Regole</button>
-    <button class="secondary" id="menuShare">Condividi</button>
-    <button class="secondary" id="menuClose">Chiudi</button>
-  </div>
-
-  <div id="game"></div>
-  <div id="msg"></div>
-
-  <div id="keyboard">
-    <div class="keyrow">
-      <button>Q</button><button>W</button><button>E</button><button>R</button>
-      <button>T</button><button>Y</button><button>U</button><button>I</button>
-      <button>O</button><button>P</button>
-    </div>
-    <div class="keyrow">
-      <button>A</button><button>S</button><button>D</button><button>F</button>
-      <button>G</button><button>H</button><button>J</button><button>K</button>
-      <button>L</button>
-    </div>
-    <div class="keyrow">
-      <button class="wide">ENTER</button>
-      <button>Z</button><button>X</button><button>C</button>
-      <button>V</button><button>B</button><button>N</button><button>M</button>
-      <button class="wide">⌫</button>
-    </div>
-  </div>
-</div>
-
 <script>
-let gameEnabled=false;
+let gameEnabled = false;
 
 const WORDS=[   "cantu","terra","limba","domus","abbae","abbas","agusu","akatu", "amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu", "berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu",
   "caded", "camin","campu","canes","capru","carri","ceddu","chelu","chena","chida", "chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre", "dente","dinai","dridu","fangu","fattu","femmu",
@@ -270,26 +29,26 @@ const WORDS=[   "cantu","terra","limba","domus","abbae","abbas","agusu","akatu",
   "telas","tempu","tetas","tontu", "tostu","totus","tuvus","tzius","usat","vacas","vasat","vasus","velas","venas","vidas","visus","vitas","zassu","zegus","zelus","zerru","zestu","ziras","zonas","zuras" ];
 const WORD_SET=new Set(WORDS);
 
-const epoch=new Date(2023,0,1);
-const dayIndex=Math.floor((Date.now()-epoch)/86400000);
-const solution=WORDS[dayIndex%WORDS.length];
+const epoch = new Date(2023, 0, 1);
+const dayIndex = Math.floor((Date.now() - epoch) / 86400000);
+const solution = WORDS[dayIndex % WORDS.length];
 
-const maxRows=6;
-let currentRow=0;
-let currentGuess="";
-let guesses=[];
+const maxRows = 6;
+let currentRow = 0;
+let currentGuess = "";
+let guesses = [];
 
-const game=document.getElementById("game");
-game.style.visibility="visible";
-const rows=[];
+const game = document.getElementById("game");
+game.style.visibility = "visible";
+const rows = [];
 
-for(let r=0;r<maxRows;r++){
-  const row=document.createElement("div");
-  row.className="row";
-  const cells=[];
-  for(let c=0;c<5;c++){
-    const cell=document.createElement("div");
-    cell.className="cell";
+for (let r = 0; r < maxRows; r++) {
+  const row = document.createElement("div");
+  row.className = "row";
+  const cells = [];
+  for (let c = 0; c < 5; c++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
     row.appendChild(cell);
     cells.push(cell);
   }
@@ -297,117 +56,196 @@ for(let r=0;r<maxRows;r++){
   rows.push(cells);
 }
 
-const msg=document.getElementById("msg");
-const overlay=document.getElementById("overlay");
-const rulesOverlay=document.getElementById("rulesOverlay");
-const startOverlay=document.getElementById("startOverlay");
-const result=document.getElementById("result");
-const solutionBox=document.getElementById("solution");
+const msg = document.getElementById("msg");
+const overlay = document.getElementById("overlay");
+const rulesOverlay = document.getElementById("rulesOverlay");
+const startOverlay = document.getElementById("startOverlay");
+const result = document.getElementById("result");
+const solutionBox = document.getElementById("solution");
+const menuBtn = document.getElementById("menuBtn");
+const menu = document.getElementById("menu");
 
-function showMsg(t){msg.textContent=t;setTimeout(()=>msg.textContent="",2000);}
+function showMsg(t) {
+  msg.textContent = t;
+  setTimeout(() => msg.textContent = "", 2000);
+}
 
-function renderGuess(guess){
-  const sol=solution.split("");
-  const count={};
-  sol.forEach(c=>count[c]=(count[c]||0)+1);
+function renderGuess(guess) {
+  const sol = solution.split("");
+  const count = {};
+  sol.forEach(c => count[c] = (count[c] || 0) + 1);
 
-  guess.split("").forEach((c,i)=>{
-    const cell=rows[currentRow][i];
-    cell.textContent=c;
-    if(c===sol[i]){
+  guess.split("").forEach((c, i) => {
+    const cell = rows[currentRow][i];
+    cell.textContent = c.toUpperCase();
+    if (c === sol[i]) {
       cell.classList.add("correct");
       count[c]--;
     }
   });
 
-  guess.split("").forEach((c,i)=>{
-    const cell=rows[currentRow][i];
-    if(cell.classList.contains("correct"))return;
-    if(sol.includes(c)&&count[c]>0){
+  guess.split("").forEach((c, i) => {
+    const cell = rows[currentRow][i];
+    if (cell.classList.contains("correct")) return;
+    if (sol.includes(c) && count[c] > 0) {
       cell.classList.add("present");
       count[c]--;
-    }else cell.classList.add("absent");
+    } else cell.classList.add("absent");
   });
 
   guesses.push(guess);
   currentRow++;
 }
 
-function submitGuess(){
-  if(!gameEnabled || currentGuess.length!==5) return;
+function submitGuess() {
+  if (!gameEnabled || currentGuess.length !== 5) return;
 
-  if(!WORD_SET.has(currentGuess)){
+  if (!WORD_SET.has(currentGuess)) {
     showMsg("Sa parola non esistit 😤");
     return;
   }
 
   renderGuess(currentGuess);
 
-  if(currentGuess===solution || currentRow>=maxRows) showEnd();
-  currentGuess="";
+  if (currentGuess === solution || currentRow >= maxRows) showEnd();
+  currentGuess = "";
 }
 
-function buildShare(){
-  let t="";
-  guesses.forEach((g,r)=>{
-    for(let i=0;i<5;i++){
-      const c=rows[r][i];
-      t+=c.classList.contains("correct")?"🟩":c.classList.contains("present")?"🟨":"⬛";
+function buildShare() {
+  let t = "";
+  guesses.forEach((g, r) => {
+    for (let i = 0; i < 5; i++) {
+      const c = rows[r][i];
+      t += c.classList.contains("correct") ? "🟩" : c.classList.contains("present") ? "🟨" : "⬛";
     }
-    t+="\n";
+    t += "\n";
   });
 
-  window.shareText="Wordle Sardo "+dayIndex+" "+
-  (guesses[guesses.length-1]===solution ? guesses.length+"/6" : "X/6")
-  +"\n\n"+t;
+  window.shareText = "Wordle Sardo " + dayIndex + " " +
+    (guesses[guesses.length - 1] === solution ? guesses.length + "/6" : "X/6")
+    + "\n\n" + t;
 }
 
-function showEnd(){
-  const win = guesses[guesses.length-1]===solution;
+function loadStats() {
+  const stats = JSON.parse(localStorage.getItem("wordleSardoStats") || '{}');
+  return {
+    wins: stats.wins || 0,
+    losses: stats.losses || 0,
+    streak: stats.streak || 0,
+    maxStreak: stats.maxStreak || 0,
+    winDist: stats.winDist || [0,0,0,0,0,0],
+  };
+}
+
+function saveStats(stats) {
+  localStorage.setItem("wordleSardoStats", JSON.stringify(stats));
+}
+
+function showStats(win, attempts) {
+  const stats = loadStats();
+
+  if (win) {
+    stats.wins++;
+    stats.streak++;
+    if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+    stats.winDist[attempts - 1]++;
+  } else {
+    stats.losses++;
+    stats.streak = 0;
+  }
+
+  saveStats(stats);
+
+  let perc = stats.wins + stats.losses > 0 ? Math.round(100 * stats.wins / (stats.wins + stats.losses)) : 0;
+
+  solutionBox.innerHTML = `
+    ${window.shareText.split("\n\n")[1]}<br><br>
+    Statistiche:<br>
+    Vittorie: ${stats.wins} (${perc}%)<br>
+    Vittorie di fila: ${stats.streak} (max ${stats.maxStreak})<br>
+    Sconfitte: ${stats.losses}<br>
+    Distribuzione vittorie:<br>
+    ${stats.winDist.map((n,i)=>`${i+1}: ${n}`).join(" | ")}
+  `;
+}
+
+function showEnd() {
+  const win = guesses[guesses.length - 1] === solution;
   result.textContent = win ? "BRAVU" : "SPACCIAU";
   buildShare();
-  solutionBox.textContent = window.shareText.split("\n\n")[1];
+  showStats(win, guesses.length);
   overlay.classList.add("show");
 }
 
-document.querySelectorAll("#keyboard button").forEach(b=>{
-  b.onclick=()=>{
-    if(!gameEnabled)return;
-    const k=b.textContent;
+// TASTIERA VIRTUALE
+document.querySelectorAll("#keyboard button").forEach(b => {
+  b.onclick = () => {
+    if (!gameEnabled) return;
+    const k = b.textContent;
 
-    if(k==="ENTER")submitGuess();
-
-    else if(k==="⌫"){
-      if(currentGuess.length>0){
-        currentGuess=currentGuess.slice(0,-1);
-        rows[currentRow][currentGuess.length].textContent="";
+    if (k === "ENTER") submitGuess();
+    else if (k === "⌫") {
+      if (currentGuess.length > 0) {
+        currentGuess = currentGuess.slice(0, -1);
+        rows[currentRow][currentGuess.length].textContent = "";
       }
-
-    }else if(currentGuess.length<5){
-      currentGuess+=k.toLowerCase();
-      rows[currentRow][currentGuess.length-1].textContent=k;
+    } else if (currentGuess.length < 5) {
+      currentGuess += k.toLowerCase();
+      rows[currentRow][currentGuess.length - 1].textContent = k.toUpperCase();
     }
   };
 });
 
-function doShare(){
-  if(navigator.share) navigator.share({text:window.shareText});
-  else{
+// TASTIERA FISICA
+document.addEventListener("keydown", e => {
+  if (!gameEnabled) return;
+  const k = e.key.toUpperCase();
+
+  if (k === "ENTER") submitGuess();
+  else if (k === "BACKSPACE") {
+    if (currentGuess.length > 0) {
+      currentGuess = currentGuess.slice(0, -1);
+      rows[currentRow][currentGuess.length].textContent = "";
+    }
+  } else if (/^[A-Z]$/.test(k) && currentGuess.length < 5) {
+    currentGuess += k.toLowerCase();
+    rows[currentRow][currentGuess.length - 1].textContent = k.toUpperCase();
+  }
+});
+
+// MENU
+menuBtn.onclick = () => {
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+};
+
+// PULSANTI MENU
+document.getElementById("openRules").onclick = () => rulesOverlay.classList.add("show");
+document.getElementById("rulesOk").onclick = () => rulesOverlay.classList.remove("show");
+document.getElementById("menuRules").onclick = () => {
+  rulesOverlay.classList.add("show");
+  menu.style.display = "none";
+};
+document.getElementById("menuShare").onclick = () => {
+  doShare();
+  menu.style.display = "none";
+};
+document.getElementById("menuClose").onclick = () => menu.style.display = "none";
+document.getElementById("closeBtn").onclick = () => overlay.classList.remove("show");
+
+// START
+document.getElementById("startPlay").onclick = () => {
+  startOverlay.classList.remove("show");
+  gameEnabled = true;
+};
+
+// SHARE
+function doShare() {
+  if (navigator.share) navigator.share({ text: window.shareText });
+  else {
     navigator.clipboard.writeText(window.shareText);
     alert("Testo copiato negli appunti!");
   }
 }
-
-document.getElementById("shareBtn").onclick=doShare;
-
-startPlay.onclick=()=>{
-  startOverlay.classList.remove("show");
-  gameEnabled=true;
-};
-
-rulesOk.onclick=()=>rulesOverlay.classList.remove("show");
-closeBtn.onclick=()=>overlay.classList.remove("show");
+document.getElementById("shareBtn").onclick = doShare;
 </script>
 
-</body>
-</html>
