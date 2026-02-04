@@ -253,6 +253,10 @@ button {
   <!-- GAME GRID -->
   <div id="game"></div>
   <div id="msg"></div>
+  <div class="game-controls" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
+    <button id="helpBtn" style="background: #2d5a88; color: white; padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">AXUDU</button>
+    <button id="surrenderBtn" style="background: #882d2d; color: white; padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">RENDA-DI</button>
+</div>
 
   <!-- VIRTUAL KEYBOARD -->
   <div id="keyboard">
@@ -502,7 +506,25 @@ async function doShare() {
     }
   }
 }
- 
+ function useHelp() {
+    if (!gameEnabled || currentRow >= maxRows) return;
+
+    // Sceglie una parola a caso dal dizionario WORDS
+    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+    
+    // Popola la variabile del tentativo corrente
+    currentGuess = randomWord;
+
+    // Aggiorna visivamente le caselle della riga corrente
+    for (let i = 0; i < 5; i++) {
+        rows[currentRow][i].textContent = randomWord[i].toUpperCase();
+    }
+
+    showMsg("Axudu prèstitu! ✨");
+    
+    // Invia automaticamente il tentativo
+    submitGuess();
+}
   function restoreSession() {
     const saved = localStorage.getItem("wordleSardoState");
     if (!saved) return;
@@ -621,7 +643,21 @@ document.getElementById("menuSurrender").onclick = () => {
 };
 
 document.getElementById("shareBtn").onclick = doShare;
+// Azione pulsante Aiuto
+document.getElementById("helpBtn").onclick = () => {
+    if (confirm("Vuoi un aiuto? Verrà inserita una parola casuale.")) {
+        useHelp();
+    }
+};
 
+// Azione pulsante Arrenditi
+document.getElementById("surrenderBtn").onclick = () => {
+    if (!gameEnabled || overlay.classList.contains("show")) return;
+
+    if (confirm("Ti vuoi arrendere? La partita sarà contata come persa.")) {
+        showEnd(true, true); // Chiama la funzione di fine gioco come "arreso"
+    }
+};
 // Ripristina la sessione all'avvio
 restoreSession();
 </script>
