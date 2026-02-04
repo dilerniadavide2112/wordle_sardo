@@ -76,6 +76,8 @@ h1{letter-spacing:.3em;margin:0}
   display:flex;
   flex-direction:column;
   align-items:center;
+   position:relative;
+  z-index:1;
 }
 
 .keyrow{
@@ -115,8 +117,9 @@ h1{letter-spacing:.3em;margin:0}
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:10;
+  z-index:9999; /* ERA 10 */
 }
+
 .show{display:flex}
 
 .modal{
@@ -243,8 +246,6 @@ const WORDS = [
   "limba","linna","littu","lobiu","luddu","lumen","macas","madru","malas","manca","mardu","mascu","matta","meldu","mentu","mesti","millu","modda","mundu", "murta","nassa","niedu","noddu","noras","notte","ogliu","omadu","onore","opidu",
   "orosu","ossia","paber","pagae","palas","pandu","parru","pattu","pedru","penna","pesas","pillu","pinna","piras", "poddu","poldu","prama","prena","puddu","puntu","raddu","ramas","randa","redda","rescu","riccu","rissu","rivas","robba",
   "ruddu","sabba","sacru","saldu","sanas","sardu","seddu","senna","serru", "sessa","sibiu","simba","sinna","soddu","soldu","sonnu","spadu","stela","stidu","suddu","tanca","tardu","tella","tenni","terra","tinta","tittu","torra","tundu",
-
-Deeivid, [04/02/2026 10:49]
 "turre","umbra","ungiu","usura", "vacua","vagus","valdu","varra","veddu","veldu","venna","verru","vidda","vigiu","virga","zinnu","zoccu","aberu","aeras","afidu","ainas","ainos","amigu","amore","ampru","andat","anima","antru", "aostu",
   "arbus","arena","armas","artes","ascia","asulu","badde","banca","bannu","basca","bator","belus","benit","birde","borta","bosas","botru","brodu","bujiu","busta","caddu","calae","canna", "carga","carru","carta","casus","catza","cerva",
   "chitu","cibus","cimas","cintu","codas","conto","coros","cosas","cozzu","crara","creja","crona","cruce","culos","cursu","custu","daret","datas", "deche","ditzu","dolos","donzi","dromi","duos","ebbas","erbas","faghu","fames","favas",
@@ -267,6 +268,7 @@ let currentGuess="";
 let guesses=[];
 
 const game=document.getElementById("game");
+game.style.visibility="visible";
 const rows=[];
 
 for(let r=0;r<maxRows;r++){
@@ -284,6 +286,22 @@ for(let r=0;r<maxRows;r++){
 }
 
 const msg=document.getElementById("msg");
+const overlay=document.getElementById("overlay");
+const rulesOverlay=document.getElementById("rulesOverlay");
+const startOverlay=document.getElementById("startOverlay");
+const result=document.getElementById("result");
+const solutionBox=document.getElementById("solution");
+const shareBtn=document.getElementById("shareBtn");
+const closeBtn=document.getElementById("closeBtn");
+const startPlay=document.getElementById("startPlay");
+const openRules=document.getElementById("openRules");
+const rulesOk=document.getElementById("rulesOk");
+const menuBtn=document.getElementById("menuBtn");
+const menu=document.getElementById("menu");
+const menuRules=document.getElementById("menuRules");
+const menuShare=document.getElementById("menuShare");
+const menuClose=document.getElementById("menuClose");
+
 function showMsg(t){msg.textContent=t;setTimeout(()=>msg.textContent="",2000);}
 
 function renderGuess(guess){
@@ -336,14 +354,16 @@ function buildShare(){
     }
     t+="\n";
   });
-  window.shareText="Wordle Sardo "+dayIndex+" "+(guesses.at(-1)===solution?guesses.length+"/6":"X/6")+"\n\n"+t;
+window.shareText="Wordle Sardo "+dayIndex+" "+
+(guesses[guesses.length-1]===solution ? guesses.length+"/6" : "X/6")
++"\n\n"+t;
 }
 
 function showEnd(){
-  const win = guesses.at(-1)===solution;
+const win = guesses[guesses.length-1]===solution;
   result.textContent = win ? "BRAVU" : "SPACCIAU";
   buildShare();
-  solution.textContent = window.shareText.split("\n\n")[1];
+solutionBox.textContent = window.shareText.split("\n\n")[1];
   overlay.classList.add("show");
 }
 
@@ -364,16 +384,27 @@ document.querySelectorAll("#keyboard button").forEach(b=>{
   };
 });
 
-menuBtn.onclick=()=>menu.style.display=menu.style.display==="block"?"none":"block";
 menuClose.onclick=()=>menu.style.display="none";
 menuRules.onclick=()=>{menu.style.display="none";rulesOverlay.classList.add("show");};
-menuShare.onclick=()=>navigator.share&&navigator.share({text:window.shareText});
+function doShare(){
+  if(navigator.share) navigator.share({text:window.shareText});
+  else{
+    navigator.clipboard.writeText(window.shareText);
+    alert("Testo copiato negli appunti!");
+  }
+}
 
-startPlay.onclick=()=>{startOverlay.classList.remove("show");gameEnabled=true};
+menuShare.onclick=doShare;
+shareBtn.onclick=doShare;
+
+startPlay.onclick=()=>{
+  startOverlay.classList.remove("show");
+  gameEnabled=true;
+  game.style.visibility="visible";
+};
 openRules.onclick=()=>rulesOverlay.classList.add("show");
 rulesOk.onclick=()=>rulesOverlay.classList.remove("show");
 
-shareBtn.onclick=()=>navigator.share&&navigator.share({text:window.shareText});
 closeBtn.onclick=()=>overlay.classList.remove("show");
 </script>
 
