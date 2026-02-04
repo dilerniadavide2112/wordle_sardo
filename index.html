@@ -304,8 +304,8 @@ function showMsg(t) {
 }
 
 // Render corretto dei colori
-function renderGuess(guess) {
-  guess = guess.trim().toLowerCase(); // rimuove eventuali spazi invisibili
+function renderGuess(guess, shouldSave = true) { 
+  guess = guess.trim().toLowerCase();
   const sol = solution.split("");
   const count = {};
   sol.forEach(c => count[c] = (count[c] || 0) + 1);
@@ -330,6 +330,10 @@ function renderGuess(guess) {
 
   guesses.push(guess);
   currentRow++;
+  
+  if (shouldSave) {
+      localStorage.setItem("wordleSardoState", JSON.stringify({day: dayIndex, guesses: guesses}));
+  }
 }
 
 function submitGuess() {
@@ -376,34 +380,38 @@ function loadStats() {
     streak: stats.streak || 0,
     maxStreak: stats.maxStreak || 0,
     winDist: stats.winDist || [0,0,0,0,0,0],
+    lastPlayedDay: stats.lastPlayedDay ?? -1 // <--- Aggiunto per tracciare l'ultimo giorno giocato
   };
 }
 
+function showStats(win, attempts, isNewResult = true) { // <--- Aggiunto isNewResult
+  const stats = loadStats();
+  
+  // Aggiorna i contatori solo se è una partita appena finita, non se sto ricaricando
+  if (isNewResult && stats.lastPlayedDay !== dayIndex) {
+    if (win) {
+      stats.wins++;
+      stats.streak++;
+      if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+      stats.winDist[attempts - 1]++;
+    } else {
+      stats.losses++;
+      stats.streak = 0;
+    }
+    stats.lastPlayedDay = dayIndex;
+    saveStats(stats);
+  }
+
+  let perc = stats.wins + stats.losses > 0 ? Math.round(100 * stats.wins / (stats.wins + stats.losses)) : 0;
+  const gridPart = window.shareText.split("\n\n")[1]?.trim() || "";
+
+  solutionBox.innerHTML = `<div style="display:inline-block;text-align:center;letter-spacing:2px;">${gridPart}</div><div style="text-align:left;margin-top:20px;font-family:sans-serif;font-size:14px;width:100%;max-width:250px;"><strong>STATISTICHE</strong><br>Vittorie: ${stats.wins} (${perc}%)<br>Serie: ${stats.streak} (max ${stats.maxStreak})<br>Sconfitte: ${stats.losses}<br><br><strong>DISTRIBUZIONE:</strong><br>${stats.winDist.map((n,i)=>`<strong>${i+1}</strong>:${n}`).join(" | ")}</div>`;
+}
 function saveStats(stats) {
   localStorage.setItem("wordleSardoStats", JSON.stringify(stats));
 }
 
-function showStats(win, attempts) {
-  const stats = loadStats();
-  if (win) {
-    stats.wins++;
-    stats.streak++;
-    if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
-    stats.winDist[attempts - 1]++;
-  } else {
-    stats.losses++;
-    stats.streak = 0;
-  }
-  saveStats(stats);
 
-  let perc = stats.wins + stats.losses > 0 ? Math.round(100 * stats.wins / (stats.wins + stats.losses)) : 0;
-  
-  // Estraiamo solo la griglia ed eliminiamo ogni spazio bianco ai lati
-  const gridPart = window.shareText.split("\n\n")[1].trim();
-
-  // IMPORTANTE: Non lasciare spazi tra i tag <div> e ${gridPart}
-  solutionBox.innerHTML = `<div style="display:inline-block;text-align:center;letter-spacing:2px;">${gridPart}</div><div style="text-align:left;margin-top:20px;font-family:sans-serif;font-size:14px;width:100%;max-width:250px;"><strong>STATISTICHE</strong><br>Vittorie: ${stats.wins} (${perc}%)<br>Serie: ${stats.streak} (max ${stats.maxStreak})<br>Sconfitte: ${stats.losses}<br><br><strong>DISTRIBUZIONE:</strong><br>${stats.winDist.map((n,i)=>`<strong>${i+1}</strong>:${n}`).join(" | ")}</div>`;
-}
 
 async function doShare() {
   buildShare();
@@ -431,15 +439,39 @@ async function doShare() {
   }
 }
  
-  
-function showEnd() {
+  function restoreSession() {
+    const saved = localStorage.getItem("wordleSardoState");
+    if (!saved) return;
+    
+    const state = JSON.parse(saved);
+    // Se il giorno è diverso, cancella il vecchio stato (nuova parola!)
+    if (state.day !== dayIndex) {
+        localStorage.removeItem("wordleSardoState");
+        return;
+    }
+
+    // Ricostruisce la griglia con i vecchi tentativi
+    state.guesses.forEach(g => {
+        renderGuess(g, false); // false per non sovrascrivere il save mentre carichi
+    });
+
+    // Se la partita era già finita, blocca il gioco e mostra i risultati
+    if (guesses.length > 0) {
+        const last = guesses[guesses.length - 1];
+        if (last === solution || guesses.length >= maxRows) {
+            startOverlay.classList.remove("show"); // Nasconde il tasto GIOCA
+            showEnd(false); // Carica le statistiche senza incrementarle
+        }
+    }
+}
+function showEnd(isNew = true) { // <--- Aggiunto parametro
+  gameEnabled = false; // Disabilita tastiera alla fine
   const win = guesses[guesses.length - 1] === solution;
-  result.textContent = win ? "BRAVU" : "SPACCIAU";
+  result.textContent = win ? "BRAVU" : "SPACCIAU (" + solution.toUpperCase() + ")";
   buildShare();
-  showStats(win, guesses.length);
+  showStats(win, guesses.length, isNew);
   overlay.classList.add("show");
 }
-
 // TASTIERA VIRTUALE
 document.querySelectorAll("#keyboard button").forEach(b => {
   b.onclick = () => {
@@ -503,4 +535,5 @@ document.getElementById("startPlay").onclick = () => {
 
 
 document.getElementById("shareBtn").onclick = doShare;
+  restoreSession();
 </script>
