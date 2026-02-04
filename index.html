@@ -182,6 +182,25 @@ button {
 .primary { background: #538d4e; color: #fff; }
 .secondary { background: #555; color: #fff; }
 
+
+/* Animazione Flip */
+@keyframes flip {
+  0% { transform: rotateX(0); }
+  45% { transform: rotateX(90deg); }
+  55% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+.cell.flip {
+  animation: flip 0.6s ease-in-out forwards;
+}
+
+/* Opzionale: un piccolo rimbalzo quando scrivi una lettera */
+.cell.pop {
+  transform: scale(1.1);
+  border-color: #565758;
+}
+  
 </style>
 </head>
 <body>
@@ -305,35 +324,61 @@ function showMsg(t) {
 
 // Render corretto dei colori
 function renderGuess(guess, shouldSave = true) { 
-  guess = guess.trim().toLowerCase();
-  const sol = solution.split("");
-  const count = {};
-  sol.forEach(c => count[c] = (count[c] || 0) + 1);
+    guess = guess.trim().toLowerCase();
+    const sol = solution.split("");
+    const count = {};
+    sol.forEach(c => count[c] = (count[c] || 0) + 1);
 
-  guess.split("").forEach((c, i) => {
-    const cell = rows[currentRow][i];
-    cell.textContent = c.toUpperCase();
-    if (c === sol[i]) {
-      cell.classList.add("correct");
-      count[c]--;
+    const rowCells = rows[currentRow];
+    const results = new Array(5);
+
+    // Primo passaggio: identifica corretti
+    guess.split("").forEach((c, i) => {
+        if (c === sol[i]) {
+            results[i] = "correct";
+            count[c]--;
+        }
+    });
+
+    // Secondo passaggio: identifica presenti o assenti
+    guess.split("").forEach((c, i) => {
+        if (results[i]) return;
+        if (sol.includes(c) && count[c] > 0) {
+            results[i] = "present";
+            count[c]--;
+        } else {
+            results[i] = "absent";
+        }
+    });
+
+    // Applicazione animazione con delay
+    guess.split("").forEach((c, i) => {
+        const cell = rowCells[i];
+        
+        // Se stiamo ripristinando la sessione, non animare, colora subito
+        if (!shouldSave) {
+            cell.textContent = c.toUpperCase();
+            cell.classList.add(results[i]);
+        } else {
+            // Animazione a cascata (0.1s di distanza tra lettere)
+            setTimeout(() => {
+                cell.classList.add("flip");
+                
+                // Cambia colore a metà rotazione (0.3s)
+                setTimeout(() => {
+                    cell.textContent = c.toUpperCase();
+                    cell.classList.add(results[i]);
+                }, 300);
+            }, i * 150);
+        }
+    });
+
+    guesses.push(guess);
+    currentRow++;
+    
+    if (shouldSave) {
+        localStorage.setItem("wordleSardoState", JSON.stringify({day: dayIndex, guesses: guesses}));
     }
-  });
-
-  guess.split("").forEach((c, i) => {
-    const cell = rows[currentRow][i];
-    if (cell.classList.contains("correct")) return;
-    if (sol.includes(c) && count[c] > 0) {
-      cell.classList.add("present");
-      count[c]--;
-    } else cell.classList.add("absent");
-  });
-
-  guesses.push(guess);
-  currentRow++;
-  
-  if (shouldSave) {
-      localStorage.setItem("wordleSardoState", JSON.stringify({day: dayIndex, guesses: guesses}));
-  }
 }
 
 function submitGuess() {
