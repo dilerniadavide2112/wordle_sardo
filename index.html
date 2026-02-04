@@ -44,19 +44,23 @@ h1 { letter-spacing: .3em; margin: 0; }
 .row {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Centra le caselle */
+  gap: 5px;               /* Crea uno spazio uniforme tra le caselle */
+  margin-bottom: 5px;      /* Spazio tra le righe */
 }
+
 .cell {
-  width: 18%;
+  width: 60px;             /* Larghezza fissa o variabile ma controllata */
+  height: 60px;
   aspect-ratio: 1/1;
   border: 2px solid #333;
-  margin: 2px 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 2rem;
+  font-weight: bold;
   text-transform: uppercase;
+  user-select: none;
 }
 .correct { background: #538d4e; border-color: #538d4e; }
 .present { background: #b59f3b; border-color: #b59f3b; }
@@ -114,10 +118,22 @@ h1 { letter-spacing: .3em; margin: 0; }
 .show { display: flex; }
 .modal {
   background: #222;
-  padding: 24px;
+  padding: 20px;
   border-radius: 12px;
-  max-width: 90%;
+  width: 90%;          /* Forza la larghezza */
+  max-width: 400px;    /* Impedisce che diventi troppo grande su PC */
+  max-height: 85vh;    /* Impedisce che esca verticalmente dallo schermo */
+  overflow-y: auto;    /* Aggiunge lo scroll se il testo è troppo lungo */
   text-align: center;
+}
+
+#solution {
+  white-space: pre-wrap;       /* Forza il testo ad andare a capo */
+  word-wrap: break-word;       /* Spezza le parole lunghe */
+  font-family: inherit;        /* Usa lo stesso font del gioco */
+  font-size: 14px;
+  text-align: left;            /* Le statistiche si leggono meglio a sinistra */
+  display: inline-block;       /* Centra il blocco di testo */
 }
 
 /* ===== MENU ===== */
