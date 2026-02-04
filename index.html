@@ -130,13 +130,14 @@ h1 { letter-spacing: .3em; margin: 0; }
 #solution {
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-family: 'Courier New', Courier, monospace; /* Fondamentale per l'allineamento emoji */
-  font-size: 18px;      /* Leggermente più grande per leggibilità */
-  text-align: center;
+  font-family: 'Courier New', Courier, monospace; /* Fondamentale per allineare emoji */
+  font-size: 18px;
+  text-align: center;      /* Centra i quadratini */
   display: block;
   margin: 10px auto;
   line-height: 1.2;
-  padding: 0;           /* Rimuove padding interni al tag pre */
+  padding: 0;
+  color: #eee;
 }
 
 /* ===== MENU ===== */
@@ -381,18 +382,24 @@ function showStats(win, attempts) {
   saveStats(stats);
 
   let perc = stats.wins + stats.losses > 0 ? Math.round(100 * stats.wins / (stats.wins + stats.losses)) : 0;
+  
+  // Prendiamo la griglia di emoji
+  const gridPart = window.shareText.split("\n\n")[1].trim();
 
+  // NOTA: Scriviamo il template senza spazi di indentazione all'inizio delle righe
   solutionBox.innerHTML = `
-    ${window.shareText.split("\n\n")[1]}<br><br>
-    Statistiche:<br>
-    Vittorie: ${stats.wins} (${perc}%)<br>
-    Vittorie di fila: ${stats.streak} (max ${stats.maxStreak})<br>
-    Sconfitte: ${stats.losses}<br>
-    Distribuzione vittorie:<br>
-    ${stats.winDist.map((n,i)=>`${i+1}: ${n}`).join(" | ")}
-  `;
+<div style="margin-bottom:15px; letter-spacing: 2px;">${gridPart}</div>
+<div style="text-align: left; display: inline-block; font-family: sans-serif; font-size: 14px; line-height: 1.6;">
+<strong>Statistiche:</strong><br>
+Vittorie: ${stats.wins} (${perc}%)<br>
+Serie: ${stats.streak} (max ${stats.maxStreak})<br>
+Sconfitte: ${stats.losses}<br>
+<hr style="border:0; border-top:1px solid #444; margin:10px 0;">
+<strong>Distribuzione:</strong><br>
+${stats.winDist.map((n,i)=>`<strong>${i+1}</strong>: ${n}`).join(" | ")}
+</div>`;
 }
-
+  
 function showEnd() {
   const win = guesses[guesses.length - 1] === solution;
   result.textContent = win ? "BRAVU" : "SPACCIAU";
