@@ -1,227 +1,5 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Wordle Sardo</title>
-<style>
-/* ===== RESET & BASE ===== */
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #111;
-  color: #eee;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-}
-.container {
-  width: 100%;
-  max-width: 420px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-header {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-h1 { letter-spacing: .3em; margin: 0; }
-.menu-btn { font-size: 26px; cursor: pointer; user-select: none; }
-
-/* ===== GAME GRID ===== */
-#game {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.row {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-}
-.cell {
-  width: 18%;
-  aspect-ratio: 1/1;
-  border: 2px solid #333;
-  margin: 2px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-.correct { background: #538d4e; border-color: #538d4e; }
-.present { background: #b59f3b; border-color: #b59f3b; }
-.absent  { background: #3a3a3c; border-color: #3c3c3c; }
-
-/* ===== KEYBOARD ===== */
-#keyboard {
-  width: 100%;
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  touch-action: manipulation;
-  -webkit-text-size-adjust: 100%;
-}
-.keyrow {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  padding: 0 4px;
-}
-#keyboard button {
-  all: unset;
-  flex: 1 1 0;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #818384;
-  color: #fff;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 16px;
-  min-width: 0;
-  max-width: 100%;
-  text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-}
-#keyboard .wide { flex: 1.6 1 0; }
-
-/* ===== MESSAGES ===== */
-#msg { height: 22px; margin: 4px; color: #ff6666; font-size: 14px; }
-
-/* ===== OVERLAYS ===== */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.7);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-.show { display: flex; }
-.modal {
-  background: #222;
-  padding: 24px;
-  border-radius: 12px;
-  max-width: 90%;
-  text-align: center;
-}
-
-/* ===== MENU ===== */
-.menu {
-  position: absolute;
-  top: 48px;
-  right: 12px;
-  background: #222;
-  border-radius: 10px;
-  padding: 10px;
-  display: none;
-  z-index: 5;
-}
-.menu button {
-  display: block;
-  width: 100%;
-  margin: 6px 0;
-}
-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.primary { background: #538d4e; color: #fff; }
-.secondary { background: #555; color: #fff; }
-
-</style>
-</head>
-<body>
-
-<!-- START OVERLAY -->
-<div id="startOverlay" class="overlay show">
-  <div class="modal">
-    <h2>WORDLE SARDO</h2>
-    <button class="primary" id="startPlay">GIOCA</button>
-    <button class="secondary" id="openRules">REGOLE</button>
-  </div>
-</div>
-
-<!-- RULES OVERLAY -->
-<div id="rulesOverlay" class="overlay">
-  <div class="modal">
-    <h2>REGOLE</h2>
-    <p>Indovina sa parola de 5 letras in 6 tentativos.</p>
-    <p>🟩 giusta e postu giustu</p>
-    <p>🟨 giusta postu sbagliadu</p>
-    <p>⬛ non est in sa parola</p>
-    <button class="primary" id="rulesOk">OK</button>
-  </div>
-</div>
-
-<!-- END / RESULT OVERLAY -->
-<div id="overlay" class="overlay">
-  <div class="modal">
-    <h2 id="result"></h2>
-    <pre id="solution"></pre>
-    <button class="primary" id="shareBtn">Condividi</button>
-    <button class="secondary" id="closeBtn">Chiudi</button>
-  </div>
-</div>
-
-<!-- MAIN CONTAINER -->
-<div class="container">
-  <header>
-    <h1>WORDLE</h1>
-    <div class="menu-btn" id="menuBtn">☰</div>
-  </header>
-
-  <!-- MENU A TENDINA -->
-  <div class="menu" id="menu">
-    <button class="secondary" id="menuRules">Regole</button>
-    <button class="secondary" id="menuShare">Condividi</button>
-    <button class="secondary" id="menuClose">Chiudi</button>
-  </div>
-
-  <!-- GAME GRID -->
-  <div id="game"></div>
-  <div id="msg"></div>
-
-  <!-- VIRTUAL KEYBOARD -->
-  <div id="keyboard">
-    <div class="keyrow">
-      <button>Q</button><button>W</button><button>E</button><button>R</button>
-      <button>T</button><button>Y</button><button>U</button><button>I</button>
-      <button>O</button><button>P</button>
-    </div>
-    <div class="keyrow">
-      <button>A</button><button>S</button><button>D</button><button>F</button>
-      <button>G</button><button>H</button><button>J</button><button>K</button>
-      <button>L</button>
-    </div>
-    <div class="keyrow">
-      <button class="wide">ENTER</button>
-      <button>Z</button><button>X</button><button>C</button>
-      <button>V</button><button>B</button><button>N</button><button>M</button>
-      <button class="wide">⌫</button>
-    </div>
-  </div>
-</div>
-
 <script>
 let gameEnabled = false;
-
 
 const WORDS = ["cantu","terra","limba","domus","abbae","abbas","agusu","akatu", "amore","annos","arras","artu","asinu","attzu","bacca","ballu","battu", "berru","bidda","binu","boghe","bonu","braxu","bussu","cabbu", "caded", "camin","campu","canes","capru","carri","ceddu","chelu","chena","chida", "chidu","coggi","conca","corru","costa","craba","crobu","cuadu","curre", "dente","dinai","dridu","fangu","fattu","femmu", "ferro","figus","filu", "foghe","forru","fradi","frori","fundu","gattu","genna","giara","goccu", "granu","herra","ibidu","istru","latte","legnu","libru","littu","logu", "macas","manus","mattu","melis","menta", "merca","metru","missa","molle", "monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini", "orru","pane","pedde","perda","pietu","pilus","pinna","pitzus","planu", "ponte","porru","pratu","prenu", "punta","putzu","rabbu","randa","rattu", "riccu","rimas","rinnu","rocca","roghe","rueda","sabba","santu","sartu", "sedda","serra","siddu","sinnu","solee","sonnu","spina","stadu","stolu", "suddu","tabba","tanca", "tattu","terru","tissu","torru","trigu","umbra", "undas","ungra","usciu","vacca","valle","vesta","vidda","vinu","virga", "zente","zinnu","bentu","abbae","abbas","abidu","acqua","addiu","agudu","aiadu","ajudu","alidu", "altu","amadu","amare","ambra","annos","ansia","apriu","aridu","arras","artu","asinu","attzu","auras","azotu", "bacas","bagna","ballu","battu","beidu","bentu","berru","bidda","binu","boghe","bonu","braxu","bravu","bussu", "cabbu","caded","camin","campu","canes","capru","carri","ceddu","chelu","chena", "chida","chidu","coggi","coldu","conca","corru","costa","craba","crobu","cuadu","curre","dente","dinai","domus","dridu","durus","fache","fangu", "fattu","femmu","ferro","figus","filu","foghe", "forru","fradi","fridu","frori","fundu","gattu","genna","giara","goccu","granu","herra","ibidu","imidu","istru","lattu","latte","legnu","libru","littu","logu","luciu","macas","maled", "manus", "mariu","mattu","melis","menta","merca","metru","missa","moddu","molle","monte","moru","mughe","nassa","niedu","ninnu","nuddu","olivu","omini","orrua","ossu","paber","panee","pannu","pedde", "perda","pesca","piana","pietu", "pilus","pinna","pintu","pitzus","planu","ponte","porru","pratu","prenu","punta","putzu","rabbu","randa","rattu","regnu","riccu","rimas","rinnu","rocca","roghe", "rueda","sabba","santu","sartu","sedda","serra","siddu","sinnu","solee", "sonnu","spada","spina","stadu","stolu","suddu","tabba","tanca","tattu","tenre","terru","tissu","torru","trigu","umbra", "undas","ungra","usciu","vacua","vacca","valle","vesta","vidda","vinu","virga","zente","zinnu","zoccu","abbidu", "abbaru","abeta","abidu","abinu","accas","acidu","acutu","agidu","ajuru","alenu", "alidu","amada","amidu","anniu","apidu","aratu","ardiu","aridu","arriu","aspre","attiu","augas","bagna","baldu","balia","barca","bentu","bidas","bighe", "bionu","boidu","bolla","branu","brida", "brutu","cabra","cairu","caldu","cantu","carbu","caria","casca","cattu","cennu","chena","cibru","coddu","cortu","cress","cuasi","curdu","dannu","deidu","dertu","doble","doltu","draga","durra", "faina","fattu","feddu","filla","finas","fitta","flori","foras","fremu","fridu","fundu","gabbu","galdu","garbu","gattu","ghidu","giogu","gradu","ibadu","impon","incas","infiu","intre","isola", "istau","laduu","lamas","lassu","lentu", "limba","linna","littu","lobiu","luddu","lumen","macas","madru","malas","manca","mardu","mascu","matta","meldu","mentu","mesti","millu","modda","mundu", "murta","nassa","niedu","noddu","noras","notte","ogliu","omadu","onore","opidu", "orosu","ossia","paber","pagae","palas","pandu","parru","pattu","pedru","penna","pesas","pillu","pinna","piras", "poddu","poldu","prama","prena","puddu","puntu","raddu","ramas","randa","redda","rescu","riccu","rissu","rivas","robba", "ruddu","sabba","sacru","saldu","sanas","sardu","seddu","senna","serru", "sessa","sibiu","simba","sinna","soddu","soldu","sonnu","spadu","stela","stidu","suddu","tanca","tardu","tella","tenni","terra","tinta","tittu","torra","tundu", "turre","umbra","ungiu","usura", "vacua","vagus","valdu","varra","veddu","veldu","venna","verru","vidda","vigiu","virga","zinnu","zoccu","aberu","aeras","afidu","ainas","ainos","amigu","amore","ampru","andat","anima","antru", "aostu", "arbus","arena","armas","artes","ascia","asulu","badde","banca","bannu","basca","bator","belus","benit","birde","borta","bosas","botru","brodu","bujiu","busta","caddu","calae","canna", "carga","carru","carta","casus","catza","cerva", "chitu","cibus","cimas","cintu","codas","conto","coros","cosas","cozzu","crara","creja","crona","cruce","culos","cursu","custu","daret","datas", "deche","ditzu","dolos","donzi","dromi","duos","ebbas","erbas","faghu","fames","favas", "festa","filas","fizos","fogus","folas","forte","funes","furas","fuste","ganas","gioia","giras","gomai", "gopai","gustu","janas","janna","josso","justu","lanas","lardu","largu","lebiu","lenas","lezes","linas","lizus","longu","luche", "lunas","maccu","malus","mamas","mamma","mancu","maris","marra", "matas","meigu","melas","mesus","miras","modde","molas","moras","mudus","mulas","mulus","muras","murus","musca","muscu","narat","naris","nasus","neula","nosus","nughe", "nuras","odius","olias", "ortus","ossas","ozzus","panis","paras","parte","passu","pazas","pedes","penas","perla","petza","pigat","pinta","pisci","pisus","pitzu","ponit","porcu","posta","pruna","pudda","pupas","ranas", "renas","resta", "robas","rodas","rosas","ruius","sacca","salas","scala","scola","segat","segus","serus","siccu","sinus","sogas","sorus","sucus","taula","tazas", "telas","tempu","tetas","tontu", "tostu","totus","tuvus","tzius","usat","vacas","vasat","vasus","velas","venas","vidas","visus","vitas","zassu","zegus","zelus","zerru","zestu","ziras","zonas","zuras"];
 const WORD_SET = new Set(WORDS);
@@ -239,6 +17,7 @@ const game = document.getElementById("game");
 game.style.visibility = "visible";
 const rows = [];
 
+// Creazione griglia
 for (let r = 0; r < maxRows; r++) {
   const row = document.createElement("div");
   row.className = "row";
@@ -267,7 +46,9 @@ function showMsg(t) {
   setTimeout(() => msg.textContent = "", 2000);
 }
 
+// Render corretto dei colori
 function renderGuess(guess) {
+  guess = guess.trim().toLowerCase(); // rimuove eventuali spazi invisibili
   const sol = solution.split("");
   const count = {};
   sol.forEach(c => count[c] = (count[c] || 0) + 1);
@@ -297,6 +78,7 @@ function renderGuess(guess) {
 function submitGuess() {
   if (!gameEnabled || currentGuess.length !== 5) return;
 
+  currentGuess = currentGuess.trim().toLowerCase(); // prevenire spazi invisibili
   if (!WORD_SET.has(currentGuess)) {
     showMsg("Sa parola non esistit 😤");
     return;
@@ -308,6 +90,7 @@ function submitGuess() {
   currentGuess = "";
 }
 
+// Generazione testo condivisibile
 function buildShare() {
   let t = "";
   guesses.forEach((g, r) => {
@@ -435,14 +218,18 @@ document.getElementById("startPlay").onclick = () => {
   gameEnabled = true;
 };
 
-// SHARE
+// SHARE con WhatsApp o copia fallback
 function doShare() {
-  if (navigator.share) navigator.share({ text: window.shareText });
-  else {
+  buildShare(); // assicura che shareText sia aggiornato
+  const waUrl = "https://wa.me/?text=" + encodeURIComponent(window.shareText);
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    window.open(waUrl, "_blank"); // apre WhatsApp
+  } else {
     navigator.clipboard.writeText(window.shareText);
     alert("Testo copiato negli appunti!");
   }
 }
 document.getElementById("shareBtn").onclick = doShare;
 </script>
-
