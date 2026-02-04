@@ -91,6 +91,13 @@ h1 { letter-spacing: .3em; margin: 0; }
   gap: 4px; /* Spazio orizzontale tra i tasti */
 }
 
+/* Colori per i tasti della tastiera */
+#keyboard button.correct { background: #538d4e !important; }
+#keyboard button.present { background: #b59f3b !important; }
+#keyboard button.absent  { background: #3a3a3c !important; }
+
+
+  
 #keyboard button {
   all: unset;
   height: 58px; /* Altezza standard Wordle */
@@ -403,6 +410,27 @@ function renderGuess(guess, shouldSave = true) {
     }
 }
 
+function updateKeyboard(guess, results) {
+  const buttons = document.querySelectorAll("#keyboard button");
+  
+  guess.split("").forEach((letter, i) => {
+    const key = Array.from(buttons).find(b => b.textContent.toLowerCase() === letter);
+    if (!key) return;
+
+    // Logica di priorità: il verde batte il giallo, il giallo batte il grigio
+    if (results[i] === "correct") {
+      key.classList.remove("present", "absent");
+      key.classList.add("correct");
+    } else if (results[i] === "present" && !key.classList.contains("correct")) {
+      key.classList.remove("absent");
+      key.classList.add("present");
+    } else if (results[i] === "absent" && !key.classList.contains("correct") && !key.classList.contains("present")) {
+      key.classList.add("absent");
+    }
+  });
+}
+
+  
 function submitGuess() {
   if (!gameEnabled || currentGuess.length !== 5) return;
 
