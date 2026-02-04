@@ -528,10 +528,19 @@ async function doShare() {
         }
     }
 }
-function showEnd(isNew = true) { // <--- Aggiunto parametro
-  gameEnabled = false; // Disabilita tastiera alla fine
-  const win = guesses[guesses.length - 1] === solution;
-  result.textContent = win ? "BRAVU" : "SPACCIAU (" + solution.toUpperCase() + ")";
+function showEnd(isNew = true, surrendered = false) { 
+  gameEnabled = false; 
+  const win = !surrendered && guesses.length > 0 && guesses[guesses.length - 1] === solution;
+  
+  if (surrendered) {
+      result.textContent = "TI SEI ARRESO 🏳️";
+  } else {
+      result.textContent = win ? "BRAVU" : "SPACCIAU";
+  }
+  
+  // Mostra comunque la soluzione
+  result.textContent += " (" + solution.toUpperCase() + ")";
+  
   buildShare();
   showStats(win, guesses.length, isNew);
   overlay.classList.add("show");
@@ -592,6 +601,16 @@ document.getElementById("closeBtn").onclick = () => overlay.classList.remove("sh
 document.getElementById("startPlay").onclick = () => {
   startOverlay.classList.remove("show");
   gameEnabled = true;
+  // Funzione Arrenditi
+document.getElementById("menuSurrender").onclick = () => {
+    if (!gameEnabled && guesses.length === 0) return; // Non fare nulla se non si sta giocando
+    
+    if (confirm("Ti vuoi arrendere? La partita verrà contata come persa.")) {
+        menu.style.display = "none";
+        // Forza la fine del gioco come sconfitta
+        // Aggiungiamo un flag per far capire a showEnd che è una resa
+        showEnd(true, true); 
+    }
 };
 
 
