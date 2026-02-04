@@ -384,15 +384,34 @@ function renderGuess(guess, shouldSave = true) {
 function submitGuess() {
   if (!gameEnabled || currentGuess.length !== 5) return;
 
-  currentGuess = currentGuess.trim().toLowerCase(); // prevenire spazi invisibili
+  currentGuess = currentGuess.trim().toLowerCase();
   if (!WORD_SET.has(currentGuess)) {
     showMsg("Sa parola non esistit 😤");
+    // Opzionale: aggiungi qui un piccolo effetto shake alla riga
     return;
   }
 
+  // Disabilita temporaneamente l'input per evitare doppi invii durante l'animazione
+  gameEnabled = false; 
+
   renderGuess(currentGuess);
 
-  if (currentGuess === solution || currentRow >= maxRows) showEnd();
+  // Controlla se il gioco è finito
+  const isWin = currentGuess === solution;
+  const isGameOver = currentRow >= maxRows;
+
+  if (isWin || isGameOver) {
+    // Aspettiamo 1.5 secondi (il tempo dei 5 flip) prima di mostrare il popup
+    setTimeout(() => {
+      showEnd();
+    }, 1500);
+  } else {
+    // Se la partita continua, riabilita la tastiera dopo l'animazione
+    setTimeout(() => {
+      gameEnabled = true;
+    }, 1200);
+  }
+  
   currentGuess = "";
 }
 
