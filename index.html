@@ -605,9 +605,14 @@ document.getElementById("startPlay").onclick = () => {
 };
 
 // Funzione Arrenditi (messa fuori da startPlay così è pulita)
+// Funzione Arrenditi
 document.getElementById("menuSurrender").onclick = () => {
-  // Se il gioco è già finito o non è iniziato, non fare nulla
-  if (overlay.classList.contains("show")) return;
+  // Se la tastiera è disabilitata o il popup finale è già visibile, non fare nulla
+  if (!gameEnabled || overlay.classList.contains("show")) {
+      showMsg("Sa partita è giai finia! 😉"); // Opzionale: un messaggio che dice che è finita
+      menu.style.display = "none";
+      return;
+  }
   
   if (confirm("Ti vuoi arrendere? La partita verrà contata come persa.")) {
       menu.style.display = "none";
