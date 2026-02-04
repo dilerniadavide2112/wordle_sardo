@@ -345,7 +345,15 @@ const result = document.getElementById("result");
 const solutionBox = document.getElementById("solution");
 const menuBtn = document.getElementById("menuBtn");
 const menu = document.getElementById("menu");
-
+const WIN_MESSAGES = {
+    1: "Ses un fìgu! 🔥 (In 1)",
+    2: "Foras de conca! ⚡ (In 2)",
+    3: "Piciocu de gabbale! ✨ (In 3)",
+    4: "Bravu meda! 👍 (In 4)",
+    5: "Duncas s'as fatta! 👏 (In 5)",
+    6: "In s'urtimu corpu! 😰 (In 6)",
+    loss: "Peccau, b'as a proare cras... 🪫"
+};
 function showMsg(t) {
   msg.textContent = t;
   setTimeout(() => msg.textContent = "", 2000);
@@ -610,29 +618,39 @@ async function doShare() {
     }
 }
 function showEnd(isNew = true, surrendered = false) { 
-  gameEnabled = false; 
-  const win = !surrendered && guesses.length > 0 && guesses[guesses.length - 1] === solution;
-  
-  // Animazione Vittoria: Salto a cascata
-  if (win) {
-      const rowCells = rows[currentRow - 1];
-      rowCells.forEach((cell, i) => {
-          setTimeout(() => {
-              cell.classList.add("win-letter");
-          }, i * 100);
-      });
-  }
+    gameEnabled = false; 
+    const win = !surrendered && guesses.length > 0 && guesses[guesses.length - 1] === solution;
+    
+    // Animazione Vittoria
+    if (win) {
+        const rowCells = rows[currentRow - 1];
+        rowCells.forEach((cell, i) => {
+            setTimeout(() => {
+                cell.classList.add("win-letter");
+            }, i * 100);
+        });
+    }
 
-  if (surrendered) {
-      result.textContent = "TI SEI ARRESO 🏳️";
-  } else {
-      result.textContent = win ? "BRAVU" : "SPACCIAU";
-  }
-  
-  result.textContent += " (" + solution.toUpperCase() + ")";
-  buildShare();
-  showStats(win, guesses.length, isNew);
-  overlay.classList.add("show");
+    // Messaggio personalizzato
+    let comment = "";
+    if (surrendered) {
+        comment = "T'as rèndiu... 🏳️";
+    } else if (win) {
+        comment = WIN_MESSAGES[guesses.length];
+    } else {
+        comment = WIN_MESSAGES.loss;
+    }
+
+    // Costruzione testo finale
+    result.innerHTML = `
+        <div style="font-size: 1.2rem; margin-bottom: 10px;">${comment}</div>
+        <div style="color: #888; font-size: 0.9rem; margin-top: 10px;">Sa paraula fiat:</div>
+        <div style="font-size: 1.8rem; font-weight: bold; color: #538d4e; letter-spacing: 3px;">${solution.toUpperCase()}</div>
+    `;
+
+    buildShare();
+    showStats(win, guesses.length, isNew);
+    overlay.classList.add("show");
 }
   
 // TASTIERA VIRTUALE
