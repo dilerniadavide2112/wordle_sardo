@@ -598,22 +598,27 @@ document.getElementById("menuClose").onclick = () => menu.style.display = "none"
 document.getElementById("closeBtn").onclick = () => overlay.classList.remove("show");
 
 // START
+// START
 document.getElementById("startPlay").onclick = () => {
   startOverlay.classList.remove("show");
   gameEnabled = true;
-  // Funzione Arrenditi
-document.getElementById("menuSurrender").onclick = () => {
-    if (!gameEnabled && guesses.length === 0) return; // Non fare nulla se non si sta giocando
-    
-    if (confirm("Ti vuoi arrendere? La partita verrà contata come persa.")) {
-        menu.style.display = "none";
-        // Forza la fine del gioco come sconfitta
-        // Aggiungiamo un flag per far capire a showEnd che è una resa
-        showEnd(true, true); 
-    }
-};};
+};
 
+// Funzione Arrenditi (messa fuori da startPlay così è pulita)
+document.getElementById("menuSurrender").onclick = () => {
+  // Se il gioco è già finito o non è iniziato, non fare nulla
+  if (overlay.classList.contains("show")) return;
+  
+  if (confirm("Ti vuoi arrendere? La partita verrà contata come persa.")) {
+      menu.style.display = "none";
+      showEnd(true, true); 
+  }
+};
 
 document.getElementById("shareBtn").onclick = doShare;
-  restoreSession();
+
+// Ripristina la sessione all'avvio
+restoreSession();
 </script>
+</body>
+</html>
