@@ -120,24 +120,25 @@ h1 { letter-spacing: .3em; margin: 0; }
   background: #222;
   padding: 20px;
   border-radius: 12px;
-  width: 90%;          /* Forza la larghezza */
-  max-width: 400px;    /* Impedisce che diventi troppo grande su PC */
-  max-height: 85vh;    /* Impedisce che esca verticalmente dallo schermo */
-  overflow-y: auto;    /* Aggiunge lo scroll se il testo è troppo lungo */
+  width: 90%;
+  max-width: 400px;
+  max-height: 85vh;
+  overflow-y: auto;
   text-align: center;
+  display: flex; /* Aggiunto per centrare i figli */
+  flex-direction: column;
+  align-items: center;
 }
 
 #solution {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'Courier New', Courier, monospace; /* Fondamentale per allineare emoji */
-  font-size: 18px;
-  text-align: center;      /* Centra i quadratini */
-  display: block;
-  margin: 10px auto;
+  white-space: pre; /* Mantiene i ritorni a capo ma ignora il wrapping automatico fastidioso */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 20px;
   line-height: 1.2;
-  padding: 0;
-  color: #eee;
+  margin: 15px 0;
+  display: block;
+  text-align: center;
+  width: 100%; /* Occupa tutto lo spazio per centrare il testo interno */
 }
 
 /* ===== MENU ===== */
@@ -368,7 +369,6 @@ function saveStats(stats) {
 
 function showStats(win, attempts) {
   const stats = loadStats();
-
   if (win) {
     stats.wins++;
     stats.streak++;
@@ -378,27 +378,43 @@ function showStats(win, attempts) {
     stats.losses++;
     stats.streak = 0;
   }
-
   saveStats(stats);
 
   let perc = stats.wins + stats.losses > 0 ? Math.round(100 * stats.wins / (stats.wins + stats.losses)) : 0;
   
-  // Prendiamo la griglia di emoji
+  // Estraiamo solo la griglia ed eliminiamo ogni spazio bianco ai lati
   const gridPart = window.shareText.split("\n\n")[1].trim();
 
-  // NOTA: Scriviamo il template senza spazi di indentazione all'inizio delle righe
-  solutionBox.innerHTML = `
-<div style="margin-bottom:15px; letter-spacing: 2px;">${gridPart}</div>
-<div style="text-align: left; display: inline-block; font-family: sans-serif; font-size: 14px; line-height: 1.6;">
-<strong>Statistiche:</strong><br>
-Vittorie: ${stats.wins} (${perc}%)<br>
-Serie: ${stats.streak} (max ${stats.maxStreak})<br>
-Sconfitte: ${stats.losses}<br>
-<hr style="border:0; border-top:1px solid #444; margin:10px 0;">
-<strong>Distribuzione:</strong><br>
-${stats.winDist.map((n,i)=>`<strong>${i+1}</strong>: ${n}`).join(" | ")}
-</div>`;
+  // IMPORTANTE: Non lasciare spazi tra i tag <div> e ${gridPart}
+  solutionBox.innerHTML = `<div style="display:inline-block;text-align:center;letter-spacing:2px;">${gridPart}</div><div style="text-align:left;margin-top:20px;font-family:sans-serif;font-size:14px;width:100%;max-width:250px;"><strong>STATISTICHE</strong><br>Vittorie: ${stats.wins} (${perc}%)<br>Serie: ${stats.streak} (max ${stats.maxStreak})<br>Sconfitte: ${stats.losses}<br><br><strong>DISTRIBUZIONE:</strong><br>${stats.winDist.map((n,i)=>`<strong>${i+1}</strong>:${n}`).join(" | ")}</div>`;
 }
+
+async function doShare() {
+  buildShare();
+  
+  // Se il browser supporta la condivisione nativa (WhatsApp, Telegram, etc. su Mobile)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Wordle Sardo',
+        text: window.shareText
+      });
+    } catch (err) {
+      console.log("Condivisione annullata o fallita");
+    }
+  } else {
+    // Fallback per PC: copia negli appunti
+    try {
+      await navigator.clipboard.writeText(window.shareText);
+      alert("Risultato copiato negli appunti! Incollalo dove vuoi.");
+    } catch (err) {
+      // Fallback estremo: WhatsApp Web
+      const waUrl = "https://web.whatsapp.com/send?text=" + encodeURIComponent(window.shareText);
+      window.open(waUrl, "_blank");
+    }
+  }
+}
+ 
   
 function showEnd() {
   const win = guesses[guesses.length - 1] === solution;
@@ -469,18 +485,6 @@ document.getElementById("startPlay").onclick = () => {
   gameEnabled = true;
 };
 
-// SHARE con WhatsApp o copia fallback
-function doShare() {
-  buildShare(); // assicura che shareText sia aggiornato
-  const waUrl = "https://wa.me/?text=" + encodeURIComponent(window.shareText);
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  if (isMobile) {
-    window.open(waUrl, "_blank"); // apre WhatsApp
-  } else {
-    navigator.clipboard.writeText(window.shareText);
-    alert("Testo copiato negli appunti!");
-  }
-}
 document.getElementById("shareBtn").onclick = doShare;
 </script>
