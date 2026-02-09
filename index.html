@@ -762,7 +762,14 @@ document.getElementById("menuSurrender").onclick = () => {
 
 document.getElementById("shareBtn").onclick = doShare;
 // Azione pulsante Aiuto
+// Azione pulsante Aiuto
 document.getElementById("helpBtn").onclick = () => {
+    // Controllo se la partita è finita
+    if (!gameEnabled || overlay.classList.contains("show")) {
+        showMsg("Sa partita è giai finia! 😉");
+        return;
+    }
+
     if (confirm("Vuoi un aiuto? Verrà inserita una parola casuale.")) {
         useHelp();
     }
