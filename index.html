@@ -761,7 +761,6 @@ document.getElementById("menuSurrender").onclick = () => {
 };
 
 // Azione pulsante Aiuto
-
 document.getElementById("helpBtn").onclick = () => {
     // Controllo se la partita è finita
     if (!gameEnabled || overlay.classList.contains("show")) {
@@ -783,10 +782,13 @@ document.getElementById("surrenderBtn").onclick = () => {
     }
 
     if (confirm("Ti vuoi arrendere? La partita sarà contata come persa.")) {
-        showEnd(true, true); // Chiama la funzione di fine gioco come "arreso"
+        showEnd(true, true); 
     }
 };
-// Ripristina la sessione all'avvio
+
+// --- QUESTA È LA RIGA FONDAMENTALE PER CONDIVIDERE ---
+document.getElementById("shareBtn").onclick = doShare;
+
 </script>
 </body>
 </html>
