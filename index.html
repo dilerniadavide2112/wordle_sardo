@@ -516,11 +516,14 @@ function buildShare() {
   const isWin = guesses.length > 0 && guesses[guesses.length - 1] === solution;
   const personalComment = isWin ? SHARE_MESSAGES[guesses.length] : SHARE_MESSAGES.loss;
 
-  // Qui usiamo dayIndex che ora parte da 1
+  // Prende l'indirizzo attuale del gioco
+  const gameUrl = window.location.href;
+
   window.shareText = "Wordle Sardo " + dayIndex + " " +
     (isWin ? guesses.length + "/6" : "X/6") + "\n" +
     personalComment + "\n\n" + 
-    gridText;
+    gridText + "\n\n" +
+    "Gioca anche tu: " + gameUrl;
 }
 function loadStats() {
   const stats = JSON.parse(localStorage.getItem("wordleSardoStats") || '{}');
