@@ -316,15 +316,25 @@ async function inizializzaGioco() {
     
     try {
         const response = await fetch(URL_DATABASE);
-        WORDS = await response.json();
+        const rawWords = await response.json(); 
+
+        // 1. PULIZIA AUTOMATICA (Indispensabile!)
+        // Filtra solo parole di 5 lettere ed elimina i duplicati
+        WORDS = [...new Set(rawWords.filter(w => w.length === 5))];
         WORD_SET = new Set(WORDS);
 
         const epoch = new Date(2026, 1, 4); 
         dayIndex = Math.max(1, Math.floor((Date.now() - epoch) / 86400000) + 1);
-        solution = WORDS[dayIndex % WORDS.length];
 
-        console.log("Database sardo caricato con successo!");
-        restoreSession(); // Carica i progressi solo quando le parole sono pronte
+        // 2. LOGICA ANTI-ALFABETICA
+        // Moltiplichiamo il giorno per un numero primo (163) per saltare qua e là nel dizionario.
+        // In questo modo la parola di oggi e di domani saranno lontanissime nel file.
+        const salto = 163; 
+        const scrambledIndex = (dayIndex * salto) % WORDS.length;
+        solution = WORDS[scrambledIndex];
+
+        console.log("Database caricato. Parola del giorno selezionata (salto anti-ordine attivo).");
+        restoreSession(); 
     } catch (err) {
         console.error(err);
         alert("Errore nel caricamento del dizionario. Controlla la connessione.");
